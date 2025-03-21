@@ -1,52 +1,27 @@
-# gmlConverter
+#gmlConverter
+"gmlConverter" ist ein Python‑Tool zur Verarbeitung und Konvertierung von CityGML‑Dateien. Das Projekt bietet eine grafische Oberfläche (GUI) zum:
 
-Willkommen bei gmlConverter – einem Tool, mit dem du CityGML-Daten bequem verarbeiten, konvertieren und visualisieren kannst. Dieses Tool wurde entwickelt, um Architekten, Planer und andere Fachleute bei der Arbeit mit GML-Dateien zu unterstützen und verschiedene Konvertierungen und Zusammenführungen zu ermöglichen.
+- Auswählen von GML‑Dateien über eine interaktive Karte (Pick GML)
+- Anpassen der Z‑Koordinaten (z0 Converter), sodass Gebäude bei Z=0 liegen
+- Konvertieren von CityGML in das IFC‑Format (GML2IFC)
+- Zusammenführen mehrerer GML‑Dateien (Merge GML)
+- Vorschau und 3D‑Visualisierung der CityGML‑Modelle (Preview)
 
-Funktionsumfang
-Pick GML
+Features
+Interaktive Deutschlandkarte ("Pick GML")
+Der Tab "Pick GML" zeigt eine Karte der deutschen Bundesländer. Beim Überfahren mit der Maus werden die Bundesländer hervorgehoben, und ein Klick öffnet den entsprechenden Geoportal‑Link, um CityGML‑Daten zu beziehen.
 
-Wähle eine oder mehrere GML-Dateien aus und lade sie ins Tool.
-Ideal, um die zu verarbeitenden GML-Daten schnell zu finden und zu importieren.
-z0 Converter
+Z‑Koordinatenanpassung ("z0 Converter")
+Mit diesem Feature werden die minimalen Z‑Werte aus den GML‑Dateien ermittelt, sodass die Gebäudeansicht bei Z=0 ausgerichtet wird.
 
-Führe eine spezielle Umwandlung (z. B. „z0-Konvertierung“) auf den ausgewählten GML-Dateien durch.
-Bereinigt, normalisiert oder transformiert Daten gemäß deiner individuellen Anforderungen.
-GML2IFC
+Konvertierung in IFC ("GML2IFC")
+Die CityGML‑Gebäudedaten werden in das IFC‑Format umgerechnet. Dabei wird für jedes Gebäude ein IfcBuildingElementProxy erstellt, das als IfcFacetedBrep abgelegt wird. Zudem werden die Koordinaten entsprechend angepasst und in einem IfcMapConversion‑Objekt dokumentiert.
 
-Konvertiere GML-Daten in das IFC-Format (Industry Foundation Classes).
-Erleichtert den Austausch zwischen verschiedenen CAD/BIM-Anwendungen.
-Merge GML
+Zusammenführen von GML‑Dateien ("Merge GML")
+Mehrere CityGML‑Dateien können zu einer einzigen konsolidierten GML‑Datei zusammengeführt werden. Dabei werden die boundingBox‑Informationen neu berechnet und Fortschrittsinformationen ausgegeben.
 
-Fasse mehrere GML-Dateien zu einer zusammen.
-Nützlich, um Projekte mit mehreren Teil-Gebieten oder -Gebäuden zu bündeln.
-Preview
+3D‑Vorschau und Visualisierung ("Preview")
+Mit Hilfe von PyVista werden GML‑Daten eingelesen, in ein MultiBlock‑Objekt umgewandelt und als 3D‑Mesh angezeigt. Zusätzliche Widgets ermöglichen verschiedene Ansichten (Top, Front, Isometric) und interaktive Steuerung des Modells.
 
-Zeigt eine Voransicht der konvertierten oder zusammengeführten GML-Dateien.
-Ermöglicht eine schnelle Kontrolle, ob die Umwandlungen wie gewünscht funktioniert haben.
-Konsolen-Ansicht
-
-Alle wichtigen Ausgaben (Logs, Fehler, Hinweise) werden in einem Konsolenfenster (bzw. Text-Widget) angezeigt.
-So kannst du leicht nachvollziehen, was im Hintergrund geschieht.
-Anwendungsbereiche
-Architektur & Planung: Schnelle Konvertierung von CityGML-Daten in IFC zur Weiterverarbeitung in CAD- und BIM-Software.
-Datenaufbereitung: Zusammenführen (Merge) mehrerer GML-Dateien oder Bereinigung via z0 Converter.
-Projekte mit großen Datenmengen: Dank der Preview-Funktion lässt sich das Ergebnis vor der finalen Nutzung kontrollieren.
-Schnellstart
-Tool starten: Beim Start siehst du zunächst einen Splash-Screen. Anschließend öffnet sich die Hauptoberfläche.
-GML-Dateien auswählen: Wechsle zum Tab „Pick GML“, um deine GML-Dateien zu laden.
-Funktionen nutzen:
-z0 Converter oder GML2IFC auswählen und starten, um die Konvertierung durchzuführen.
-Merge GML, falls du mehrere GML-Dateien in eine Datei zusammenführen möchtest.
-Ergebnis prüfen: Im Tab „Preview“ kannst du eine Voransicht der konvertierten Daten anzeigen lassen.
-Konsole im Blick behalten: Überprüfe im unteren Konsolen-Widget, ob Fehlermeldungen oder Hinweise ausgegeben werden.
-Voraussetzungen
-Windows-Betriebssystem (getestet ab Windows 10).
-Installation von Python ist nicht erforderlich, wenn du die .exe-Version verwendest.
-Bei Bedarf: Internetzugang, wenn externe Datenquellen oder Updates abgerufen werden.
-Tipps & Hinweise
-Dateistruktur: Achte darauf, dass deine GML-Dateien in korrekter Struktur vorliegen, damit der Konverter optimal arbeiten kann.
-Datensicherung: Fertige vor umfangreichen Konvertierungen stets eine Sicherheitskopie deiner Originaldaten an.
-Log-Ausgaben: Lies die Meldungen in der Konsole, um mögliche Fehlerquellen schnell zu erkennen.
-Kontakt & Support
-Entwickelt von mwo @ Krekeler Architekten Generalplaner GmbH
-Bei Fragen oder Anregungen kannst du dich gerne an das Team wenden.
+Kontakt
+Für Fragen, Anregungen oder Fehlerberichte wende Dich bitte an maximilian.woharek@krekeler-architekten.de
