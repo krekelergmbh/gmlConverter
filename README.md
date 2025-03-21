@@ -1,5 +1,4 @@
-#gmlConverter
-"gmlConverter" ist ein Python‑Tool zur Verarbeitung und Konvertierung von CityGML‑Dateien. Das Projekt bietet eine grafische Oberfläche (GUI) zum:
+gmlConverter ist ein Python‑Tool zur Verarbeitung und Konvertierung von CityGML‑Dateien. Das Projekt bietet eine grafische Oberfläche (GUI) zum:
 
 - Auswählen von GML‑Dateien über eine interaktive Karte (Pick GML)
 - Anpassen der Z‑Koordinaten (z0 Converter), sodass Gebäude bei Z=0 liegen
