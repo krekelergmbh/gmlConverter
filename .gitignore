@@ -10,6 +10,9 @@ build/
 dist/
 *.manifest
 
+# Lokal heruntergeladene CI-Artefakte
+_builds/
+
 # Im CI generierte Icon-Zwischendateien
 icon_master.png
 icon.iconset/
