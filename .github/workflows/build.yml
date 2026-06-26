@@ -1,0 +1,111 @@
+name: Build
+
+# Manuell auslösbar (Actions-Tab -> "Run workflow") und bei Versions-Tags v*.
+# Nur ein Tag-Push (z. B. v1.0.0) erzeugt zusätzlich ein GitHub-Release.
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  # ---------------------------------------------------------------- macOS
+  build-macos:
+    # macos-13 = Intel (x86_64). Ergebnis läuft nativ auf Intel-Macs
+    # und via Rosetta 2 auch auf Apple-Silicon-Macs.
+    runs-on: macos-13
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Python einrichten
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Abhängigkeiten installieren
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r citygml_converter/requirements.txt
+
+      - name: App-Icon (.icns) aus kgp.ico erzeugen
+        run: |
+          python -c "from PIL import Image; Image.open('citygml_converter/__files__/kgp.ico').convert('RGBA').save('icon_master.png')"
+          mkdir -p icon.iconset
+          for pair in "16 16x16" "32 16x16@2x" "32 32x32" "64 32x32@2x" \
+                      "128 128x128" "256 128x128@2x" "256 256x256" \
+                      "512 256x256@2x" "512 512x512" "1024 512x512@2x"; do
+            set -- $pair
+            sips -z "$1" "$1" icon_master.png --out "icon.iconset/icon_$2.png"
+          done
+          iconutil -c icns icon.iconset -o citygml_converter/__files__/kgp.icns
+
+      - name: Build mit PyInstaller
+        run: pyinstaller gmlConverter.spec --noconfirm
+
+      - name: .app als ZIP packen
+        run: |
+          cd dist
+          zip -r -y gmlConverter-macos.zip gmlConverter.app
+
+      - name: Artefakt hochladen
+        uses: actions/upload-artifact@v4
+        with:
+          name: gmlConverter-macos
+          path: dist/gmlConverter-macos.zip
+          if-no-files-found: error
+
+  # -------------------------------------------------------------- Windows
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Python einrichten
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Abhängigkeiten installieren
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r citygml_converter/requirements.txt
+
+      - name: Build mit PyInstaller
+        run: pyinstaller gmlConverter.spec --noconfirm
+
+      - name: Ordner als ZIP packen
+        shell: pwsh
+        run: Compress-Archive -Path dist/gmlConverter -DestinationPath gmlConverter-windows.zip
+
+      - name: Artefakt hochladen
+        uses: actions/upload-artifact@v4
+        with:
+          name: gmlConverter-windows
+          path: gmlConverter-windows.zip
+          if-no-files-found: error
+
+  # -------------------------------------------------------------- Release
+  release:
+    needs: [build-macos, build-windows]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Artefakte herunterladen
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: GitHub-Release erstellen
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            artifacts/gmlConverter-macos/gmlConverter-macos.zip \
+            artifacts/gmlConverter-windows/gmlConverter-windows.zip \
+            --repo "${{ github.repository }}" \
+            --title "${{ github.ref_name }}" \
+            --generate-notes
