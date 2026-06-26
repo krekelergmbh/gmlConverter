@@ -11,9 +11,10 @@ on:
 jobs:
   # ---------------------------------------------------------------- macOS
   build-macos:
-    # macos-13 = Intel (x86_64). Ergebnis läuft nativ auf Intel-Macs
-    # und via Rosetta 2 auch auf Apple-Silicon-Macs.
-    runs-on: macos-13
+    # macos-14 = Apple Silicon (arm64). Schnelle Runner-Zuteilung.
+    # Ergebnis läuft nativ auf Apple-Silicon-Macs (M1/M2/M3/M4);
+    # auf alten Intel-Macs läuft die App NICHT.
+    runs-on: macos-14
     steps:
       - name: Checkout
         uses: actions/checkout@v4
