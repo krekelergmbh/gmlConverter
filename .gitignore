@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# PyInstaller-Build-Artefakte
+build/
+dist/
+*.manifest
+
+# Im CI generierte Icon-Zwischendateien
+icon_master.png
+icon.iconset/
+citygml_converter/__files__/kgp.icns
+
+# Claude Code lokale Einstellungen (nicht teilen)
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db
