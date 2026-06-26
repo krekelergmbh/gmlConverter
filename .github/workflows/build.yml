@@ -65,13 +65,15 @@ jobs:
           IDENTITY: ${{ secrets.APPLE_SIGN_IDENTITY }}
         run: |
           APP="dist/gmlConverter.app"
-          # Zuerst alle eingebetteten Bibliotheken signieren ...
-          find "$APP/Contents" \( -name "*.so" -o -name "*.dylib" \) -print0 \
-            | while IFS= read -r -d '' f; do
-                codesign --force --timestamp --options runtime \
-                  --entitlements entitlements.plist -s "$IDENTITY" "$f"
-              done
-          # ... dann das App-Bundle selbst
+          # JEDE eingebettete Mach-O-Binärdatei signieren (egal welche Endung),
+          # innen zuerst – Apple verlangt das für die Notarisierung.
+          find "$APP" -type f | while IFS= read -r f; do
+            if file "$f" | grep -q "Mach-O"; then
+              codesign --force --timestamp --options runtime \
+                --entitlements entitlements.plist -s "$IDENTITY" "$f"
+            fi
+          done
+          # Zum Schluss das App-Bundle selbst
           codesign --force --timestamp --options runtime \
             --entitlements entitlements.plist -s "$IDENTITY" "$APP"
           codesign --verify --deep --strict --verbose=2 "$APP"
@@ -84,8 +86,24 @@ jobs:
         run: |
           cd dist
           ditto -c -k --keepParent gmlConverter.app gmlConverter-notarize.zip
-          xcrun notarytool submit gmlConverter-notarize.zip \
-            --apple-id "$APPLE_ID" --team-id "$TEAM_ID" --password "$APP_PW" --wait
+          SUBMIT_ID=$(xcrun notarytool submit gmlConverter-notarize.zip \
+            --apple-id "$APPLE_ID" --team-id "$TEAM_ID" --password "$APP_PW" \
+            --output-format json \
+            | python3 -c "import sys,json; print(json.load(sys.stdin)['id'])")
+          echo "Submission ID: $SUBMIT_ID"
+          xcrun notarytool wait "$SUBMIT_ID" \
+            --apple-id "$APPLE_ID" --team-id "$TEAM_ID" --password "$APP_PW"
+          echo "=== Notarisierungs-Log (Begründung) ==="
+          xcrun notarytool log "$SUBMIT_ID" \
+            --apple-id "$APPLE_ID" --team-id "$TEAM_ID" --password "$APP_PW" || true
+          STATUS=$(xcrun notarytool info "$SUBMIT_ID" \
+            --apple-id "$APPLE_ID" --team-id "$TEAM_ID" --password "$APP_PW" \
+            --output-format json \
+            | python3 -c "import sys,json; print(json.load(sys.stdin)['status'])")
+          echo "Notarisierungs-Status: $STATUS"
+          if [ "$STATUS" != "Accepted" ]; then
+            echo "Notarisierung fehlgeschlagen."; exit 1
+          fi
           xcrun stapler staple gmlConverter.app
           xcrun stapler validate gmlConverter.app
 
