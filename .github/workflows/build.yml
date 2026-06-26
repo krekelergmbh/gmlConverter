@@ -44,7 +44,52 @@ jobs:
       - name: Build mit PyInstaller
         run: pyinstaller gmlConverter.spec --noconfirm
 
-      - name: .app als ZIP packen
+      - name: Signier-Zertifikat in temporären Keychain importieren
+        env:
+          CERT_B64: ${{ secrets.APPLE_CERT_P12_BASE64 }}
+          CERT_PW: ${{ secrets.APPLE_CERT_PASSWORD }}
+        run: |
+          KEYCHAIN="$RUNNER_TEMP/app-signing.keychain-db"
+          KEYCHAIN_PW="$(openssl rand -base64 24)"
+          echo "$CERT_B64" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security create-keychain -p "$KEYCHAIN_PW" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PW" "$KEYCHAIN"
+          security import "$RUNNER_TEMP/cert.p12" -P "$CERT_PW" -A -t cert -f pkcs12 -k "$KEYCHAIN"
+          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PW" "$KEYCHAIN" >/dev/null
+          security list-keychain -d user -s "$KEYCHAIN" login.keychain-db
+          rm -f "$RUNNER_TEMP/cert.p12"
+
+      - name: App signieren (codesign, Hardened Runtime)
+        env:
+          IDENTITY: ${{ secrets.APPLE_SIGN_IDENTITY }}
+        run: |
+          APP="dist/gmlConverter.app"
+          # Zuerst alle eingebetteten Bibliotheken signieren ...
+          find "$APP/Contents" \( -name "*.so" -o -name "*.dylib" \) -print0 \
+            | while IFS= read -r -d '' f; do
+                codesign --force --timestamp --options runtime \
+                  --entitlements entitlements.plist -s "$IDENTITY" "$f"
+              done
+          # ... dann das App-Bundle selbst
+          codesign --force --timestamp --options runtime \
+            --entitlements entitlements.plist -s "$IDENTITY" "$APP"
+          codesign --verify --deep --strict --verbose=2 "$APP"
+
+      - name: Notarisieren und Ticket anheften (staple)
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APP_PW: ${{ secrets.APPLE_APP_PASSWORD }}
+        run: |
+          cd dist
+          ditto -c -k --keepParent gmlConverter.app gmlConverter-notarize.zip
+          xcrun notarytool submit gmlConverter-notarize.zip \
+            --apple-id "$APPLE_ID" --team-id "$TEAM_ID" --password "$APP_PW" --wait
+          xcrun stapler staple gmlConverter.app
+          xcrun stapler validate gmlConverter.app
+
+      - name: Signierte .app als ZIP packen
         run: |
           cd dist
           zip -r -y gmlConverter-macos.zip gmlConverter.app
