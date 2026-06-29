@@ -1,34 +1,38 @@
 import ttkbootstrap as ttkb
-from ttkbootstrap.constants import SUCCESS
-import tkinter as tk
 from tkinter import filedialog
 import pyvista as pv
 from citygml_converter.gml_preview import parse_gml_to_multiblock
+from citygml_converter.ui import section_header, FilePicker
+
 
 def create_tab_preview(notebook):
-    tab_preview = ttkb.Frame(notebook)
-    tab_preview.columnconfigure(0, weight=0)
-    tab_preview.columnconfigure(1, weight=1)
+    tab = ttkb.Frame(notebook, padding=28)
+    tab.columnconfigure(0, weight=1)
 
-    gml_path_var = tk.StringVar(value="Dateien durchsuchen...")
     mesh_data = [None]
 
-    def select_gml_file(event):
-        path = filedialog.askopenfilename(filetypes=[("CityGML Dateien", "*.gml")])
-        if path:
-            gml_path_var.set(path)
-            print("[Preview] GML-Datei ausgewählt:", path)
+    section_header(
+        tab,
+        "Preview",
+        "Lädt eine CityGML-Datei und zeigt die Gebäude als interaktives 3D-Modell."
+    ).grid(row=0, column=0, sticky="ew", pady=(0, 20))
+
+    picker = FilePicker(
+        tab, "CityGML-Datei", "Dateien durchsuchen...",
+        lambda: filedialog.askopenfilename(filetypes=[("CityGML Dateien", "*.gml")])
+    )
+    picker.grid(row=1, column=0, sticky="ew", pady=(0, 22))
 
     def load_gml():
-        path = gml_path_var.get()
-        if path == "Dateien durchsuchen..." or not path:
+        path = picker.get()
+        if not path:
             print("Fehler:", "Keine GML-Datei ausgewählt!")
             return
         try:
             multi_block = parse_gml_to_multiblock(path)
             mesh_data[0] = multi_block
             print("Erfolg:", "GML wurde geladen.")
-            btn_preview.configure(style="Krekeler.TButton")
+            btn_preview.configure(style="CTA.TButton")
         except Exception as e:
             print("Fehler beim Laden der GML:", e)
 
@@ -115,28 +119,13 @@ def create_tab_preview(notebook):
         except Exception as e:
             print("Fehler beim Anzeigen der Vorschau:", e)
 
-    entry_gml = ttkb.Entry(tab_preview, textvariable=gml_path_var, width=50)
-    entry_gml.grid(row=0, column=0, columnspan=2, padx=5, pady=5, sticky="ew")
-    entry_gml.configure(takefocus=False)
+    btn_row = ttkb.Frame(tab)
+    btn_row.grid(row=2, column=0, sticky="w")
 
-    def on_entry_click(event):
-        select_gml_file(event)
-    entry_gml.bind("<Button-1>", on_entry_click)
+    btn_load = ttkb.Button(btn_row, text="Laden", style="CTA.TButton", command=load_gml)
+    btn_load.pack(side="left")
 
-    btn_load = ttkb.Button(
-        tab_preview,
-        text="Laden",
-        style="Krekeler.TButton",
-        command=load_gml
-    )
-    btn_load.grid(row=1, column=0, padx=5, pady=5, sticky="w")
+    btn_preview = ttkb.Button(btn_row, text="Vorschau", style="Grey.TButton", command=show_preview)
+    btn_preview.pack(side="left", padx=(10, 0))
 
-    btn_preview = ttkb.Button(
-        tab_preview,
-        text="Vorschau",
-        style="Grey.TButton",
-        command=show_preview
-    )
-    btn_preview.grid(row=1, column=1, padx=5, pady=5, sticky="w")
-
-    return tab_preview
+    return tab

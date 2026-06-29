@@ -19,6 +19,16 @@ from citygml_converter.tab_map import create_tab_map
 # Splash-Funktion importieren
 from citygml_converter.splash import show_splash
 
+# Geteilte UI-Helfer
+from citygml_converter import ui
+
+# Optional: Drag & Drop (tkinterdnd2). Fällt sauber zurück, wenn nicht verfügbar.
+try:
+    from tkinterdnd2 import TkinterDnD
+    _DND_IMPORTED = True
+except Exception:
+    _DND_IMPORTED = False
+
 def resource_path(relative_path):
     """
     Gibt den absoluten Pfad zur Ressource zurück.
@@ -42,6 +52,31 @@ class TextRedirector:
     def flush(self):
         pass
 
+def _create_main_window(themename="journal"):
+    """Erzeugt das Hauptfenster, möglichst mit Drag-&-Drop-Fähigkeit.
+
+    Gibt (fenster, dnd_aktiv) zurück. Falls tkinterdnd2 nicht verfügbar ist
+    oder nicht initialisiert werden kann, wird ein normales Fenster ohne
+    Drag & Drop zurückgegeben – ohne Funktionsverlust.
+    """
+    if _DND_IMPORTED:
+        win = None
+        try:
+            class _DnDWindow(ttkb.Window, TkinterDnD.DnDWrapper):
+                pass
+            win = _DnDWindow(themename=themename)
+            win.TkdndVersion = TkinterDnD._require(win)
+            return win, True
+        except Exception as e:
+            if win is not None:
+                try:
+                    win.destroy()
+                except Exception:
+                    pass
+            print(f"Drag&Drop nicht verfügbar, nutze Standard-Fenster: {e}")
+    return ttkb.Window(themename=themename), False
+
+
 def main():
     """
     1) Unsichtbares tk.Tk() für den Splash
@@ -59,8 +94,9 @@ def main():
     # 3) Root zerstören
     root.destroy()
 
-    # 4) Hauptfenster
-    app = ttkb.Window(themename="journal")
+    # 4) Hauptfenster (mit Drag-&-Drop-Fähigkeit, falls verfügbar)
+    app, _dnd_active = _create_main_window("journal")
+    ui.DND_ACTIVE = _dnd_active
     app.title("gmlConverter by mwo @ Krekeler Architekten Generalplaner GmbH")
     
     # Icon setzen (verwende resource_path, um kgp.ico zu laden)
@@ -86,6 +122,20 @@ def main():
         foreground=[("hover", "#FFFFFF"), ("active", "#FFFFFF")]
     )
 
+    # Prominenter Haupt-Aktionsbutton (Call To Action)
+    style.configure(
+        "CTA.TButton",
+        foreground="#FFFFFF",
+        background="#892337",
+        font=("Segoe UI Semibold", 13),
+        borderwidth=0,
+        padding=(22, 11)
+    )
+    style.map("CTA.TButton",
+        background=[("hover", "#A23A48"), ("active", "#701F2A")],
+        foreground=[("hover", "#FFFFFF"), ("active", "#FFFFFF")]
+    )
+
     style.configure(
         "Grey.TButton",
         foreground="#666666",
@@ -105,7 +155,8 @@ def main():
     style.configure("Minimal.TNotebook.Tab",
         foreground="#666666",
         background="#FFFFFF",
-        font=("Segoe UI", 12)
+        font=("Segoe UI", 12),
+        padding=(14, 8)
     )
     style.map("Minimal.TNotebook.Tab",
         foreground=[
@@ -127,6 +178,16 @@ def main():
     # Frames + Notebook
     outer_frame = ttkb.Frame(app, style="TFrame", padding=10)
     outer_frame.pack(fill=BOTH, expand=True)
+
+    # Dezenter Header
+    header_frame = ttkb.Frame(outer_frame, style="TFrame")
+    header_frame.pack(side=tk.TOP, fill=tk.X, pady=(0, 8))
+    ttkb.Label(header_frame, text="gmlConverter",
+               font=("Segoe UI Semibold", 18), foreground="#222222",
+               background="#FFFFFF").pack(side=tk.LEFT)
+    ttkb.Label(header_frame, text="CityGML-Werkzeuge",
+               font=("Segoe UI", 10), foreground="#8A8A8A",
+               background="#FFFFFF").pack(side=tk.LEFT, padx=(12, 0), pady=(7, 0))
 
     notebook_frame = ttkb.Frame(outer_frame, style="TFrame")
     notebook_frame.pack(side=tk.TOP, fill=BOTH, expand=True)

@@ -1,35 +1,39 @@
 import ttkbootstrap as ttkb
-from ttkbootstrap.constants import SUCCESS
-import tkinter as tk
 from tkinter import filedialog
 from citygml_converter.z0_converter import convert_gml_to_z0
+from citygml_converter.ui import section_header, FilePicker
+
 
 def create_tab_z0(notebook):
-    tab_z0 = ttkb.Frame(notebook)
-    tab_z0.columnconfigure(0, weight=1)
+    tab = ttkb.Frame(notebook, padding=28)
+    tab.columnconfigure(0, weight=1)
 
-    entry_input_z0 = ttkb.Entry(tab_z0, width=50)
-    entry_input_z0.grid(row=0, column=0, padx=5, pady=5, sticky="ew")
-    entry_input_z0.insert(0, "Dateien durchsuchen...")
-    entry_input_z0.configure(takefocus=False)
+    section_header(
+        tab,
+        "z0 Converter",
+        "Verschiebt alle Z-Koordinaten, sodass das Gebäude auf Höhe Z = 0 liegt."
+    ).grid(row=0, column=0, sticky="ew", pady=(0, 20))
 
-    def select_input_z0(event):
-        path = filedialog.askopenfilename(filetypes=[("CityGML Dateien", "*.gml")])
-        if path:
-            entry_input_z0.delete(0, "end")
-            entry_input_z0.insert(0, path)
+    inp = FilePicker(
+        tab, "1 · CityGML-Eingabedatei", "Dateien durchsuchen...",
+        lambda: filedialog.askopenfilename(filetypes=[("CityGML Dateien", "*.gml")])
+    )
+    inp.grid(row=1, column=0, sticky="ew", pady=(0, 16))
 
-    entry_input_z0.bind("<Button-1>", select_input_z0)
-
-    ttkb.Label(tab_z0, text="").grid(row=1, column=0)
+    outp = FilePicker(
+        tab, "2 · Ausgabedatei (Speicherort)", "Speicherort...",
+        lambda: filedialog.asksaveasfilename(
+            defaultextension=".gml", filetypes=[("CityGML Dateien", "*.gml")])
+    )
+    outp.grid(row=2, column=0, sticky="ew", pady=(0, 22))
 
     def run_z0():
-        in_path = entry_input_z0.get()
-        out_path = entry_output_z0.get()
-        if not in_path or in_path == "Dateien durchsuchen...":
+        in_path = inp.get()
+        out_path = outp.get()
+        if not in_path:
             print("Fehler", "Bitte GML-Datei angeben!")
             return
-        if not out_path or out_path == "Speicherort...":
+        if not out_path:
             print("Fehler", "Bitte Ausgabedatei angeben!")
             return
         try:
@@ -38,22 +42,7 @@ def create_tab_z0(notebook):
         except Exception as e:
             print("Fehler", str(e))
 
-    btn_convert = ttkb.Button(tab_z0, text="Konvertieren", command=run_z0, style="Krekeler.TButton")
-    btn_convert.grid(row=2, column=0, pady=5)
+    ttkb.Button(tab, text="Konvertieren", command=run_z0, style="CTA.TButton")\
+        .grid(row=3, column=0, sticky="w")
 
-    ttkb.Label(tab_z0, text="").grid(row=3, column=0)
-
-    entry_output_z0 = ttkb.Entry(tab_z0, width=50)
-    entry_output_z0.grid(row=4, column=0, padx=5, pady=5, sticky="ew")
-    entry_output_z0.insert(0, "Speicherort...")
-    entry_output_z0.configure(takefocus=False)
-
-    def select_output_z0(event):
-        path = filedialog.asksaveasfilename(defaultextension=".gml", filetypes=[("CityGML Dateien", "*.gml")])
-        if path:
-            entry_output_z0.delete(0, "end")
-            entry_output_z0.insert(0, path)
-
-    entry_output_z0.bind("<Button-1>", select_output_z0)
-
-    return tab_z0
+    return tab

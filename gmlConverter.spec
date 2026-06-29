@@ -11,7 +11,7 @@ binaries = []
 hiddenimports = []
 
 # Pakete mit Datendateien / kompilierten Modulen vollständig einsammeln
-for pkg in ["ifcopenshell", "pyvista", "vtkmodules", "ttkbootstrap", "PIL", "shapely"]:
+for pkg in ["ifcopenshell", "pyvista", "vtkmodules", "ttkbootstrap", "PIL", "shapely", "tkinterdnd2"]:
     d, b, h = collect_all(pkg)
     datas += d
     binaries += b
