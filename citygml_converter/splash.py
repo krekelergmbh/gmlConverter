@@ -32,25 +32,25 @@ def show_splash(duration=6000):
     splash = tk.Toplevel()
     splash.overrideredirect(True)  # Titelleiste und Rahmen entfernen
 
-    # Größe und Position: 400x300 in der Bildschirmmitte
-    splash_width, splash_height = 400, 300
+    # Größe und Position: in der Bildschirmmitte
+    splash_width, splash_height = 460, 320
     screen_width = splash.winfo_screenwidth()
     screen_height = splash.winfo_screenheight()
     x = (screen_width - splash_width) // 2
     y = (screen_height - splash_height) // 2
     splash.geometry(f"{splash_width}x{splash_height}+{x}+{y}")
 
-    # Logo-Pfad ermitteln über resource_path
-    logo_path = resource_path(os.path.join("__files__", "Krekeler_Logo_rgb_200mm.png"))
+    # Logo-Pfad ermitteln über resource_path (aktuelles Logo)
+    logo_path = resource_path(os.path.join("__files__", "Krekeler_Logo_RGB_Rot_300dpi.png"))
 
     try:
-        # Bild laden und skalieren (Original: 9452x1168px, Ziel: max. Breite 350px)
+        # Bild laden und proportionsgetreu in eine Box einpassen
         logo_image = Image.open(logo_path)
-        max_logo_width = 350
+        max_logo_width, max_logo_height = 380, 120
         orig_width, orig_height = logo_image.size
-        ratio = max_logo_width / orig_width
-        new_width = int(orig_width * ratio)
-        new_height = int(orig_height * ratio)
+        ratio = min(max_logo_width / orig_width, max_logo_height / orig_height)
+        new_width = max(1, int(orig_width * ratio))
+        new_height = max(1, int(orig_height * ratio))
         logo_image = logo_image.resize((new_width, new_height), Image.Resampling.LANCZOS)
         logo = ImageTk.PhotoImage(logo_image)
     except Exception as e:

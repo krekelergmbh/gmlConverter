@@ -64,12 +64,12 @@ def enable_file_drop(widget, on_files):
 def section_header(parent, title, subtitle=None):
     """Einheitliche Abschnitts-Überschrift: Akzentlinie + Titel (+ Untertitel)."""
     frame = ttkb.Frame(parent)
-    tk.Frame(frame, background=BRAND, width=46, height=3).pack(anchor="w", pady=(0, 8))
-    ttkb.Label(frame, text=title, font=("Segoe UI Semibold", 17),
+    tk.Frame(frame, background=BRAND, width=58, height=4).pack(anchor="w", pady=(0, 9))
+    ttkb.Label(frame, text=title, font=("Segoe UI Semibold", 21),
                foreground=INK).pack(anchor="w")
     if subtitle:
-        ttkb.Label(frame, text=subtitle, font=("Segoe UI", 10), foreground=MUTED,
-                   wraplength=600, justify="left").pack(anchor="w", pady=(4, 0))
+        ttkb.Label(frame, text=subtitle, font=("Segoe UI", 13), foreground=MUTED,
+                   wraplength=700, justify="left").pack(anchor="w", pady=(5, 0))
     return frame
 
 
@@ -91,24 +91,24 @@ class FilePicker(ttkb.Frame):
         self._dialog = dialog
         self.columnconfigure(0, weight=1)
 
-        ttkb.Label(self, text=label, font=("Segoe UI Semibold", 10),
+        ttkb.Label(self, text=label, font=("Segoe UI Semibold", 13),
                    foreground=INK).grid(row=0, column=0, columnspan=2,
-                                        sticky="w", pady=(0, 4))
+                                        sticky="w", pady=(0, 5))
 
         self.var = tk.StringVar(value=placeholder)
-        self.entry = ttkb.Entry(self, textvariable=self.var, font=("Segoe UI", 10))
-        self.entry.grid(row=1, column=0, sticky="ew", ipady=5)
+        self.entry = ttkb.Entry(self, textvariable=self.var, font=("Segoe UI", 13))
+        self.entry.grid(row=1, column=0, sticky="ew", ipady=7)
         self.entry.configure(takefocus=False)
         self.entry.bind("<Button-1>", lambda e: self.browse())
 
         ttkb.Button(self, text="Durchsuchen", style="Grey.TButton",
-                    command=self.browse).grid(row=1, column=1, padx=(8, 0), sticky="ew")
+                    command=self.browse).grid(row=1, column=1, padx=(10, 0), sticky="ew")
 
         hint = ("Datei hierher ziehen oder Feld anklicken" if dnd_ready()
                 else "Feld anklicken, um eine Datei auszuwählen")
-        ttkb.Label(self, text=hint, font=("Segoe UI", 8),
+        ttkb.Label(self, text=hint, font=("Segoe UI", 10),
                    foreground=MUTED).grid(row=2, column=0, columnspan=2,
-                                          sticky="w", pady=(4, 0))
+                                          sticky="w", pady=(5, 0))
 
         if dnd:
             enable_file_drop(self.entry, self._dropped)

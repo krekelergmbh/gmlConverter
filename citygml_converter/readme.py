@@ -39,18 +39,18 @@ def create_readme_tab(notebook, style):
     top_frame = ttkb.Frame(content_frame)
     top_frame.pack(fill='x', padx=20, pady=(0,5))
     title_label = ttkb.Label(top_frame, textvariable=title_var,
-                             font=("Segoe UI", 14, "bold"), foreground="black")
+                             font=("Segoe UI", 18, "bold"), foreground="black")
     title_label.pack(anchor="w")
-    
+
     # Leerzeile als Abstandshalter
-    spacer = ttkb.Label(content_frame, text="", font=("Segoe UI", 12))
+    spacer = ttkb.Label(content_frame, text="", font=("Segoe UI", 14))
     spacer.pack(fill='x', pady=(0,5))
-    
+
     # Label für den erklärenden Text
     content_var = tk.StringVar()
     content_var.set("Wählen Sie einen Menüpunkt aus der linken Spalte, um detaillierte Informationen anzuzeigen.")
     explanation_label = ttkb.Label(content_frame, textvariable=content_var,
-                                   wraplength=500, justify="left", font=("Segoe UI", 12),
+                                   wraplength=620, justify="left", font=("Segoe UI", 15),
                                    foreground="black")
     explanation_label.pack(fill='both', padx=20, pady=(0,10))
     

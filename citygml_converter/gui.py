@@ -106,6 +106,15 @@ def main():
     except Exception as e:
         print(f"Fehler beim Setzen des Icons: {e}")
 
+    # Beim Start maximiert/Vollbild öffnen (plattformübergreifend)
+    try:
+        app.state("zoomed")                     # Windows / die meisten Plattformen
+    except Exception:
+        try:
+            app.attributes("-zoomed", True)     # Linux
+        except Exception:
+            app.geometry(f"{app.winfo_screenwidth()}x{app.winfo_screenheight()}+0+0")
+
     # Dein Style-Code
     style = ttkb.Style()
     style.configure(".", background="#FFFFFF")
@@ -114,7 +123,7 @@ def main():
         "Krekeler.TButton",
         foreground="#FFFFFF",
         background="#892337",
-        font=("Segoe UI", 12),
+        font=("Segoe UI", 14),
         borderwidth=0
     )
     style.map("Krekeler.TButton",
@@ -127,9 +136,9 @@ def main():
         "CTA.TButton",
         foreground="#FFFFFF",
         background="#892337",
-        font=("Segoe UI Semibold", 13),
+        font=("Segoe UI Semibold", 16),
         borderwidth=0,
-        padding=(22, 11)
+        padding=(26, 14)
     )
     style.map("CTA.TButton",
         background=[("hover", "#A23A48"), ("active", "#701F2A")],
@@ -140,7 +149,7 @@ def main():
         "Grey.TButton",
         foreground="#666666",
         background="#DDDDDD",
-        font=("Segoe UI", 12),
+        font=("Segoe UI", 14),
         borderwidth=0
     )
     style.map("Grey.TButton",
@@ -155,8 +164,8 @@ def main():
     style.configure("Minimal.TNotebook.Tab",
         foreground="#666666",
         background="#FFFFFF",
-        font=("Segoe UI", 12),
-        padding=(14, 8)
+        font=("Segoe UI", 14),
+        padding=(16, 10)
     )
     style.map("Minimal.TNotebook.Tab",
         foreground=[
@@ -172,7 +181,7 @@ def main():
     style.configure("FooterBrand.TLabel",
         foreground="#999999",
         background="#FFFFFF",
-        font=("Segoe UI", 10, "italic")
+        font=("Segoe UI", 11, "italic")
     )
 
     # Frames + Notebook
@@ -183,11 +192,11 @@ def main():
     header_frame = ttkb.Frame(outer_frame, style="TFrame")
     header_frame.pack(side=tk.TOP, fill=tk.X, pady=(0, 8))
     ttkb.Label(header_frame, text="gmlConverter",
-               font=("Segoe UI Semibold", 18), foreground="#222222",
+               font=("Segoe UI Semibold", 22), foreground="#222222",
                background="#FFFFFF").pack(side=tk.LEFT)
     ttkb.Label(header_frame, text="CityGML-Werkzeuge",
-               font=("Segoe UI", 10), foreground="#8A8A8A",
-               background="#FFFFFF").pack(side=tk.LEFT, padx=(12, 0), pady=(7, 0))
+               font=("Segoe UI", 13), foreground="#8A8A8A",
+               background="#FFFFFF").pack(side=tk.LEFT, padx=(14, 0), pady=(9, 0))
 
     notebook_frame = ttkb.Frame(outer_frame, style="TFrame")
     notebook_frame.pack(side=tk.TOP, fill=BOTH, expand=True)
@@ -195,10 +204,7 @@ def main():
     notebook = ttkb.Notebook(notebook_frame, style="Minimal.TNotebook")
     notebook.pack(fill=BOTH, expand=True)
 
-    # Tabs
-    tab_start = create_readme_tab(notebook, style)
-    notebook.add(tab_start, text="README")
-
+    # Tabs (README ganz ans Ende)
     tab_map = create_tab_map(notebook)
     notebook.add(tab_map, text="Pick GML")
 
@@ -213,6 +219,9 @@ def main():
 
     tab_preview = create_tab_preview(notebook)
     notebook.add(tab_preview, text="Preview")
+
+    tab_start = create_readme_tab(notebook, style)
+    notebook.add(tab_start, text="README")
 
     # Console Frame
     console_frame = ttkb.Frame(outer_frame, style="TFrame")

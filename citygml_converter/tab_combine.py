@@ -86,7 +86,7 @@ def create_tab_combine(notebook):
     # --- Oberfläche -------------------------------------------------------
     toolbar = ttkb.Frame(tab)
     toolbar.grid(row=1, column=0, sticky="ew", pady=(0, 8))
-    ttkb.Label(toolbar, text="Eingabedateien", font=("Segoe UI Semibold", 10),
+    ttkb.Label(toolbar, text="Eingabedateien", font=("Segoe UI Semibold", 13),
                foreground=INK).pack(side="left")
     ttkb.Button(toolbar, text="Hinzufügen", style="Grey.TButton",
                 command=add_gml_files).pack(side="right")
@@ -97,7 +97,8 @@ def create_tab_combine(notebook):
     list_frame.grid(row=2, column=0, sticky="nsew", pady=(0, 4))
 
     listbox = tk.Listbox(list_frame, height=8, activestyle="none",
-                         borderwidth=1, relief="solid", highlightthickness=0)
+                         borderwidth=1, relief="solid", highlightthickness=0,
+                         font=("Segoe UI", 12))
     listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
     scrollbar = ttkb.Scrollbar(list_frame, bootstyle="round", command=listbox.yview)
@@ -108,7 +109,7 @@ def create_tab_combine(notebook):
     enable_file_drop(listbox, add_paths)
 
     ttkb.Label(tab, text="Tipp: GML-Dateien direkt in die Liste ziehen.",
-               font=("Segoe UI", 8), foreground=MUTED)\
+               font=("Segoe UI", 10), foreground=MUTED)\
         .grid(row=3, column=0, sticky="w", pady=(0, 14))
 
     out_picker = FilePicker(
