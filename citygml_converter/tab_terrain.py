@@ -45,10 +45,29 @@ def _file_sig(path):
         return (path, -1, -1)
 
 
+def add_tile_paths(paths, tile_list, listbox):
+    """Fügt DGM-Kachel-Pfade validiert in Liste + Listbox ein (geteilt mit Preview)."""
+    for p in paths:
+        if not p:
+            continue
+        if os.path.isdir(p):
+            print(f"Übersprungen (Ordner): {p} – bitte die Kachel-Dateien "
+                  f"selbst hinzufügen.")
+            continue
+        if p.lower().endswith(".zip"):
+            print(f"Übersprungen (ZIP): {os.path.basename(p)} – bitte erst "
+                  f"entpacken, dann die XYZ-/ASC-Dateien hinzufügen.")
+            continue
+        if p in tile_list:
+            print(f"Übersprungen (bereits in der Liste): {os.path.basename(p)}")
+            continue
+        tile_list.append(p)
+        listbox.insert(tk.END, p)
+
+
 def create_tab_terrain(notebook):
     tab = ttkb.Frame(notebook, padding=28)
     tab.columnconfigure(0, weight=1)
-    tab.rowconfigure(4, weight=1)
 
     dgm_file_list = []
     busy = [False]                    # verhindert re-entrante Läufe
@@ -57,22 +76,23 @@ def create_tab_terrain(notebook):
     section_header(
         tab,
         "Gelände (DGM)",
-        "Lädt amtliche Geländemodelle (DGM, XYZ/ASC-Kacheln) und kombiniert sie "
-        "mit den CityGML-Gebäuden – als 3D-Vorschau und IFC-Export."
-    ).grid(row=0, column=0, sticky="ew", pady=(0, 18))
+        "Erzeugt aus amtlichen Geländemodellen (DGM) eine IFC – wahlweise "
+        "kombiniert mit den CityGML-Gebäuden oder als reines Gelände. "
+        "Die 3D-Ansicht finden Sie im Tab 'Preview'."
+    ).grid(row=0, column=0, sticky="ew", pady=(0, 20))
 
-    # ---- 1 · Download-Portal -------------------------------------------
-    portal_row = ttkb.Frame(tab)
-    portal_row.grid(row=1, column=0, sticky="ew", pady=(0, 16))
-    ttkb.Label(portal_row, text="1 · DGM-Daten herunterladen",
+    # ---- 1 · Download-Portal (Aufbau wie FilePicker: Label / Zeile / Hinweis)
+    ttkb.Label(tab, text="1 · DGM-Daten herunterladen",
                font=("Segoe UI Semibold", 13), foreground=INK)\
-        .pack(side="left")
+        .grid(row=1, column=0, sticky="w", pady=(0, 5))
 
+    portal_row = ttkb.Frame(tab)
+    portal_row.grid(row=2, column=0, sticky="w")
     state_var = tk.StringVar(value="Brandenburg")
     combo = ttkb.Combobox(portal_row, textvariable=state_var,
                           values=list(DGM_PORTALE.keys()),
-                          state="readonly", width=24, font=("Segoe UI", 12))
-    combo.pack(side="left", padx=(16, 8))
+                          state="readonly", width=26, font=("Segoe UI", 13))
+    combo.pack(side="left", ipady=7)
 
     def open_portal():
         url = DGM_PORTALE.get(state_var.get())
@@ -81,43 +101,25 @@ def create_tab_terrain(notebook):
             print(f"[Gelände] Portal geöffnet: {state_var.get()}")
 
     ttkb.Button(portal_row, text="Portal öffnen", style="Grey.TButton",
-                command=open_portal).pack(side="left")
+                command=open_portal).pack(side="left", padx=(10, 0))
     ttkb.Label(tab,
-               text="Dort DGM1-Kacheln als XYZ- oder ASC-Datei herunterladen "
+               text="DGM1-Kacheln als XYZ- oder ASC-Datei herunterladen "
                     "(gzip .gz wird direkt unterstützt, ZIP bitte vorher entpacken).",
                font=("Segoe UI", 10), foreground=MUTED)\
-        .grid(row=2, column=0, sticky="w", pady=(0, 14))
+        .grid(row=3, column=0, sticky="w", pady=(5, 16))
 
     # ---- 2 · Kachel-Liste ------------------------------------------------
-    def add_paths(paths):
-        for p in paths:
-            if not p:
-                continue
-            if os.path.isdir(p):
-                print(f"Übersprungen (Ordner): {p} – bitte die Kachel-Dateien "
-                      f"selbst hinzufügen.")
-                continue
-            if p.lower().endswith(".zip"):
-                print(f"Übersprungen (ZIP): {os.path.basename(p)} – bitte erst "
-                      f"entpacken, dann die XYZ-/ASC-Dateien hinzufügen.")
-                continue
-            if p in dgm_file_list:
-                print(f"Übersprungen (bereits in der Liste): {os.path.basename(p)}")
-                continue
-            dgm_file_list.append(p)
-            listbox.insert(tk.END, p)
-
     def add_files():
         paths = filedialog.askopenfilenames(filetypes=DGM_FILETYPES)
         if paths:
-            add_paths(list(paths))
+            add_tile_paths(list(paths), dgm_file_list, listbox)
 
     def clear_files():
         dgm_file_list.clear()
         listbox.delete(0, tk.END)
 
     toolbar = ttkb.Frame(tab)
-    toolbar.grid(row=3, column=0, sticky="ew", pady=(0, 8))
+    toolbar.grid(row=4, column=0, sticky="ew", pady=(0, 8))
     ttkb.Label(toolbar, text="2 · DGM-Kacheln", font=("Segoe UI Semibold", 13),
                foreground=INK).pack(side="left")
     ttkb.Button(toolbar, text="Hinzufügen", style="Grey.TButton",
@@ -126,42 +128,44 @@ def create_tab_terrain(notebook):
                 command=clear_files).pack(side="right", padx=(0, 8))
 
     list_frame = ttkb.Frame(tab)
-    list_frame.grid(row=4, column=0, sticky="nsew", pady=(0, 4))
+    list_frame.grid(row=5, column=0, sticky="ew")
     listbox = tk.Listbox(list_frame, height=5, activestyle="none",
                          borderwidth=1, relief="solid", highlightthickness=0,
-                         font=("Segoe UI", 12))
+                         font=("Segoe UI", 13))
     listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
     scrollbar = ttkb.Scrollbar(list_frame, bootstyle="round", command=listbox.yview)
     scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
     listbox.config(yscrollcommand=scrollbar.set)
-    enable_file_drop(listbox, add_paths)
+    enable_file_drop(listbox, lambda paths: add_tile_paths(paths, dgm_file_list, listbox))
 
-    hint = ("Tipp: DGM-Kacheln direkt in die Liste ziehen." if dnd_ready()
-            else "Kacheln über 'Hinzufügen' auswählen.")
+    hint = ("DGM-Kacheln hierher ziehen oder über 'Hinzufügen' auswählen."
+            if dnd_ready() else "Kacheln über 'Hinzufügen' auswählen.")
     ttkb.Label(tab, text=hint, font=("Segoe UI", 10), foreground=MUTED)\
-        .grid(row=5, column=0, sticky="w", pady=(0, 14))
+        .grid(row=6, column=0, sticky="w", pady=(5, 16))
 
-    # ---- 3 · Gebäude-GML + 4 · IFC-Ausgabe -------------------------------
+    # ---- 3 · Gebäude-GML (optional) + 4 · IFC-Ausgabe --------------------
     gml_picker = FilePicker(
-        tab, "3 · CityGML-Gebäude (für Zuschnitt & Kombination)",
+        tab, "3 · CityGML-Gebäude (optional – leer lassen für reines Gelände)",
         "Dateien durchsuchen...",
         lambda: filedialog.askopenfilename(filetypes=[("CityGML Dateien", "*.gml")])
     )
-    gml_picker.grid(row=6, column=0, sticky="ew", pady=(0, 14))
+    gml_picker.grid(row=7, column=0, sticky="ew", pady=(0, 16))
 
     out_picker = FilePicker(
-        tab, "4 · IFC-Ausgabedatei (Gelände + Gebäude)", "IFC4 Speicherort...",
+        tab, "4 · IFC-Ausgabedatei", "IFC4 Speicherort...",
         lambda: filedialog.asksaveasfilename(
             defaultextension=".ifc", filetypes=[("IFC4 Dateien", "*.ifc")])
     )
-    out_picker.grid(row=7, column=0, sticky="ew", pady=(0, 18))
+    out_picker.grid(row=8, column=0, sticky="ew", pady=(0, 22))
 
-    # ---- Aktionen ---------------------------------------------------------
+    # ---- Aktion -----------------------------------------------------------
     def _log(*args):
-        """Fortschritt sofort sichtbar machen (Konsole zeichnet erst bei update)."""
+        """Fortschritt sofort sichtbar machen. update_idletasks() zeichnet die
+        Konsole neu, verarbeitet aber KEINE Klicks – verhindert verschachtelte
+        Aktionen (auch aus anderen Tabs) während der Verarbeitung."""
         print(*args)
         try:
-            tab.update()
+            tab.update_idletasks()
         except tk.TclError:
             pass
 
@@ -184,87 +188,41 @@ def create_tab_terrain(notebook):
             print("Fehler bei der DGM-Verarbeitung:", e)
             return None
 
-    def _run_guarded(fn):
-        """Führt eine Aktion aus; blockiert Doppel-Klicks, deaktiviert die Buttons."""
+    def export_ifc():
         if busy[0]:
             print("Bitte warten – es läuft bereits eine Verarbeitung.")
             return
+        gml_path = gml_picker.get()
+        out_path = out_picker.get()
+        if not out_path:
+            print("Fehler: Bitte IFC-Ausgabedatei angeben (Feld 4)!")
+            return
         busy[0] = True
         btn_export.configure(state="disabled")
-        btn_preview.configure(state="disabled")
         try:
-            fn()
+            mesh = _prepare(gml_path)
+            if mesh is None:
+                return
+            vertices, faces = dgm.mesh_to_triangles(mesh)
+            if gml_path:
+                _log(f"Schreibe IFC: Gebäude + Gelände "
+                     f"({len(faces):,} Dreiecke) ...".replace(",", "."))
+            else:
+                _log(f"Schreibe IFC: reines Gelände "
+                     f"({len(faces):,} Dreiecke) ...".replace(",", "."))
+            convert_gml_to_ifc(gml_path or None, out_path,
+                               terrain=(vertices, faces))
+        except Exception as e:
+            print("Fehler beim IFC-Export:", e)
         finally:
             busy[0] = False
             try:
                 btn_export.configure(state="normal")
-                btn_preview.configure(state="normal")
             except tk.TclError:
                 pass
 
-    def show_preview():
-        import pyvista as pv
-        import numpy as np
-
-        gml_path = gml_picker.get()
-        mesh = _prepare(gml_path)
-        if mesh is None:
-            return
-        try:
-            # Gemeinsamer Anzeige-Offset (VTK rechnet intern mit float32)
-            offset = np.array(mesh.bounds[::2], dtype=np.float64)
-            terrain_view = mesh.copy()
-            terrain_view.points = terrain_view.points - offset
-
-            plotter = pv.Plotter()
-            plotter.add_mesh(terrain_view, color="#C9B896",
-                             show_edges=False, style="surface")
-
-            if gml_path:
-                from citygml_converter.gml_preview import parse_gml_to_multiblock
-                multi_block = parse_gml_to_multiblock(gml_path)
-                for i in range(len(multi_block)):
-                    block = multi_block[i]
-                    if block is None or block.n_points == 0:
-                        continue
-                    block = block.triangulate()
-                    block.points = block.points - offset
-                    plotter.add_mesh(block, color="white",
-                                     show_edges=False, style="surface")
-
-            plotter.show_axes()
-            plotter.add_text("Gelände + Gebäude" if gml_path else "Gelände",
-                             position=(20, 20), font_size=10, color="black")
-            plotter.show()
-        except Exception as e:
-            print("Fehler bei der Vorschau:", e)
-
-    def export_ifc():
-        gml_path = gml_picker.get()
-        out_path = out_picker.get()
-        if not gml_path:
-            print("Fehler: Bitte CityGML-Gebäudedatei angeben (Feld 3)!")
-            return
-        if not out_path:
-            print("Fehler: Bitte IFC-Ausgabedatei angeben (Feld 4)!")
-            return
-        mesh = _prepare(gml_path)
-        if mesh is None:
-            return
-        try:
-            vertices, faces = dgm.mesh_to_triangles(mesh)
-            _log(f"Schreibe IFC ({len(faces):,} Gelände-Dreiecke) ...".replace(",", "."))
-            convert_gml_to_ifc(gml_path, out_path, terrain=(vertices, faces))
-        except Exception as e:
-            print("Fehler beim IFC-Export:", e)
-
-    btn_row = ttkb.Frame(tab)
-    btn_row.grid(row=8, column=0, sticky="w")
-    btn_export = ttkb.Button(btn_row, text="Als IFC exportieren", style="CTA.TButton",
-                             command=lambda: _run_guarded(export_ifc))
-    btn_export.pack(side="left")
-    btn_preview = ttkb.Button(btn_row, text="Vorschau", style="Grey.TButton",
-                              command=lambda: _run_guarded(show_preview))
-    btn_preview.pack(side="left", padx=(10, 0))
+    btn_export = ttkb.Button(tab, text="Als IFC exportieren", style="CTA.TButton",
+                             command=export_ifc)
+    btn_export.grid(row=9, column=0, sticky="w")
 
     return tab

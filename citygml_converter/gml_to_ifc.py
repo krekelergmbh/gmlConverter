@@ -16,9 +16,11 @@ def convert_gml_to_ifc(input_path, output_path, terrain=None):
     Für jedes <bldg:Building> wird ein IfcBuildingElementProxy erzeugt
     und als IfcFacetedBrep (IfcClosedShell) abgelegt.
 
-    Koordinaten werden um (min_x, min_y, min_z) verschoben,
-    und im IfcMapConversion dokumentieren wir nur Eastings/Northings
-    (Z-Verschiebung wird NICHT als OrthHeight/OrthElevation gesetzt).
+    input_path darf None sein, wenn terrain übergeben wird – dann entsteht
+    eine reine Gelände-IFC ohne Gebäude.
+
+    Koordinaten werden um (min_x, min_y, min_z) verschoben; die Verschiebung
+    ist im IfcMapConversion dokumentiert (Eastings/Northings/OrthogonalHeight).
 
     Optional: terrain=(vertices, faces) fügt ein Gelände (DGM) als
     IfcGeographicElement mit IfcTriangulatedFaceSet hinzu.
@@ -27,43 +29,51 @@ def convert_gml_to_ifc(input_path, output_path, terrain=None):
     denselben Offset verschoben und passen dadurch exakt zusammen.
     """
 
-    # 1) GML parsen
-    tree = ET.parse(input_path)
-    root = tree.getroot()
-
-    # Alle Koordinaten sammeln, um min_x/min_y/min_z zu bestimmen
+    # 1) GML parsen (optional – ohne GML entsteht eine reine Gelände-IFC)
+    root = None
+    buildings = []
     all_coords = []
-    buildings = root.findall('.//core:cityObjectMember/bldg:Building', ns)
-    if not buildings:
-        print("Keine <bldg:Building> gefunden (CityGML 1.0 erwartet) – "
-              "es wird keine IFC-Datei geschrieben.")
+    if input_path:
+        tree = ET.parse(input_path)
+        root = tree.getroot()
+
+        buildings = root.findall('.//core:cityObjectMember/bldg:Building', ns)
+        if not buildings:
+            print("Keine <bldg:Building> gefunden (CityGML 1.0 erwartet) – "
+                  "es wird keine IFC-Datei geschrieben.")
+            return
+
+        # Alle Koordinaten sammeln, um min_x/min_y/min_z zu bestimmen
+        for bldg in buildings:
+            bounded_by_list = bldg.findall('.//bldg:boundedBy', ns)
+            for bb in bounded_by_list:
+                if len(bb) == 0:
+                    continue
+                surface_elem = bb[0]  # z.B. GroundSurface, WallSurface, RoofSurface
+                polygons = surface_elem.findall('.//gml:Polygon', ns)
+                for poly in polygons:
+                    exterior = poly.find('.//gml:exterior', ns)
+                    if exterior is None:
+                        continue
+                    posList = exterior.find('.//gml:posList', ns)
+                    if posList is None or not posList.text:
+                        continue
+                    coords = [float(c) for c in posList.text.strip().split()]
+                    for i in range(0, len(coords), 3):
+                        all_coords.append((coords[i], coords[i+1], coords[i+2]))
+
+        if not all_coords:
+            print("Keine Koordinaten gefunden.")
+            return
+    elif terrain is None:
+        print("Weder Gebäude-GML noch Gelände angegeben – nichts zu tun.")
         return
 
-    for bldg in buildings:
-        bounded_by_list = bldg.findall('.//bldg:boundedBy', ns)
-        for bb in bounded_by_list:
-            if len(bb) == 0:
-                continue
-            surface_elem = bb[0]  # z.B. GroundSurface, WallSurface, RoofSurface
-            polygons = surface_elem.findall('.//gml:Polygon', ns)
-            for poly in polygons:
-                exterior = poly.find('.//gml:exterior', ns)
-                if exterior is None:
-                    continue
-                posList = exterior.find('.//gml:posList', ns)
-                if posList is None or not posList.text:
-                    continue
-                coords = [float(c) for c in posList.text.strip().split()]
-                for i in range(0, len(coords), 3):
-                    all_coords.append((coords[i], coords[i+1], coords[i+2]))
-
-    if not all_coords:
-        print("Keine Koordinaten gefunden.")
-        return
-
-    min_x = min(c[0] for c in all_coords)
-    min_y = min(c[1] for c in all_coords)
-    min_z = min(c[2] for c in all_coords)
+    min_x = min_y = min_z = float("inf")
+    if all_coords:
+        min_x = min(c[0] for c in all_coords)
+        min_y = min(c[1] for c in all_coords)
+        min_z = min(c[2] for c in all_coords)
 
     # Gelände in den gemeinsamen Offset einbeziehen, damit Gebäude und
     # Gelände im IFC exakt zusammenpassen (Gelände liegt i.d.R. tiefer).
@@ -73,6 +83,10 @@ def convert_gml_to_ifc(input_path, output_path, terrain=None):
             min_x = min(min_x, float(min(v[0] for v in t_vertices)))
             min_y = min(min_y, float(min(v[1] for v in t_vertices)))
             min_z = min(min_z, float(min(v[2] for v in t_vertices)))
+
+    if min_x == float("inf"):
+        print("Keine verwertbare Geometrie gefunden – es wird keine IFC-Datei geschrieben.")
+        return
 
     # 2) IFC-Datei erstellen
     ifc_file = ifcopenshell.file(schema="IFC4")
@@ -175,7 +189,7 @@ def convert_gml_to_ifc(input_path, output_path, terrain=None):
     )
 
     # GML-Name in PropertySet
-    gml_name_elem = root.find('.//gml:name', ns)
+    gml_name_elem = root.find('.//gml:name', ns) if root is not None else None
     if gml_name_elem is not None and gml_name_elem.text:
         prop_name = ifc_file.create_entity("IfcPropertySingleValue",
             Name="gml:name",
@@ -371,6 +385,10 @@ def convert_gml_to_ifc(input_path, output_path, terrain=None):
                 RelatedObjects=[terrain_elem]
             )
         else:
+            if not buildings:
+                print("Gelände ohne verwertbare Geometrie und keine Gebäude – "
+                      "es wird keine IFC-Datei geschrieben.")
+                return
             print("Warnung: Gelände übergeben, aber ohne verwertbare Geometrie – übersprungen.")
 
     # 5) IFC-Datei speichern

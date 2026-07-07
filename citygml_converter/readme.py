@@ -75,7 +75,7 @@ def create_readme_tab(notebook, style):
         ),
         "Merge GML": (
             "Schritt 1: Dateien hinzufügen: Klicken Sie auf den 'Hinzufügen'-Button und wählen Sie die gewünschten CityGML-Dateien aus.\n\n"
-            "Schritt 2: Liste überprüfen: Prüfen Sie die angezeigte Liste und entfernen Sie ggf. einzelne Dateien mit 'Clear List'.\n\n"
+            "Schritt 2: Liste überprüfen: Prüfen Sie die angezeigte Liste. Mit 'Liste leeren' können Sie die gesamte Auswahl zurücksetzen und neu beginnen.\n\n"
             "Schritt 3: Ausgabedatei festlegen: Geben Sie den Zielpfad und den Dateinamen für die zusammengeführte Datei ein.\n\n"
             "Schritt 4: Merge starten: Klicken Sie auf den 'Merge'-Button, um den Zusammenführungsprozess zu starten. Am Ende erhalten Sie eine konsolidierte CityGML-Datei."
         ),
@@ -84,19 +84,22 @@ def create_readme_tab(notebook, style):
             "Laden Sie dort die DGM1-Kacheln für Ihr Gebiet herunter (XYZ- oder ASC-Format, auch gzip .gz).\n\n"
             "Schritt 2: Kacheln hinzufügen: Fügen Sie die heruntergeladenen DGM-Kacheln über 'Hinzufügen' hinzu "
             "oder ziehen Sie sie direkt in die Liste.\n\n"
-            "Schritt 3: Gebäude angeben: Wählen Sie die CityGML-Datei mit den Gebäuden. Das Gelände wird automatisch "
-            "auf den Gebäudebereich (+100 m Rand) zugeschnitten. Wichtig: Original-GML mit absoluten Höhen verwenden "
+            "Schritt 3: Gebäude angeben (optional): Wählen Sie die CityGML-Datei mit den Gebäuden – dann entsteht eine "
+            "kombinierte IFC und das Gelände wird automatisch auf den Gebäudebereich (+100 m Rand) zugeschnitten. "
+            "Ohne Gebäude-GML entsteht eine reine Gelände-IFC. Wichtig: Original-GML mit absoluten Höhen verwenden "
             "(nicht die z0-konvertierte Datei), damit Gebäude und Gelände zusammenpassen.\n\n"
-            "Schritt 4: Ergebnis erzeugen: 'Vorschau' zeigt Gelände und Gebäude gemeinsam in 3D. "
-            "'Als IFC exportieren' erzeugt eine IFC4-Datei mit Gebäuden und Gelände (IfcGeographicElement)."
+            "Schritt 4: 'Als IFC exportieren' erzeugt die IFC4-Datei (Gelände als IfcGeographicElement).\n\n"
+            "Tipp: Die 3D-Ansicht von Gelände und Gebäuden finden Sie im Tab 'Preview'."
         ),
         "Preview": (
-            "Schritt 1: Datei auswählen: Klicken Sie auf das Eingabefeld und wählen Sie die gewünschte CityGML-Datei aus.\n\n"
-            "Schritt 2: Datei laden: Klicken Sie auf den 'Laden'-Button, um die Datei einzulesen.\n\n"
-            "Schritt 3: Vorschau starten: Klicken Sie auf den 'Vorschau'-Button, um die grafische Darstellung zu öffnen. So erhalten Sie einen visuellen Überblick über das Gebäudemodell."
+            "Schritt 1: Daten auswählen: Wählen Sie eine CityGML-Datei und/oder fügen Sie DGM-Kacheln hinzu – "
+            "beides zusammen zeigt Gebäude und Gelände kombiniert.\n\n"
+            "Schritt 2: Daten laden: Klicken Sie auf den 'Laden'-Button, um die Dateien einzulesen. "
+            "Sind Gebäude und Gelände angegeben, wird das Gelände auf den Gebäudebereich zugeschnitten.\n\n"
+            "Schritt 3: Vorschau starten: Klicken Sie auf den 'Vorschau'-Button, um die grafische 3D-Darstellung zu öffnen."
         ),
         "PyVista Fenster": (
-            "Schritt 1: Öffnen Sie den Preview-Tab und klicken Sie auf 'Vorschau', um das 3D-Modell zu laden.\n\n"
+            "Schritt 1: Öffnen Sie den Preview-Tab, laden Sie Ihre Daten über 'Laden' und öffnen Sie das 3D-Fenster über 'Vorschau'.\n\n"
             "Schritt 2: Wählen Sie die gewünschte Ansicht (Top View, Front View oder Isometric), um das Modell aus verschiedenen Perspektiven zu betrachten.\n\n"
             "Schritt 3: Interagieren Sie mit dem Modell: Ziehen Sie, um zu rotieren; scrollen Sie, um hinein- oder herauszuzoomen; klicken Sie, um Details auszuwählen."
         )

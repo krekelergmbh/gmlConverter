@@ -120,6 +120,9 @@ def main():
     style = ttkb.Style()
     style.configure(".", background="#FFFFFF")
 
+    # Combobox-Dropdown-Liste erbt sonst den kleinen Tk-Default
+    app.option_add("*TCombobox*Listbox.font", ("Segoe UI", 13))
+
     style.configure(
         "Krekeler.TButton",
         foreground="#FFFFFF",
