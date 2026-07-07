@@ -13,6 +13,7 @@ from citygml_converter.readme import create_readme_tab
 from citygml_converter.tab_z0 import create_tab_z0
 from citygml_converter.tab_ifc import create_tab_ifc
 from citygml_converter.tab_combine import create_tab_combine
+from citygml_converter.tab_terrain import create_tab_terrain
 from citygml_converter.tab_preview import create_tab_preview
 from citygml_converter.tab_map import create_tab_map
 
@@ -216,6 +217,9 @@ def main():
 
     tab_combine = create_tab_combine(notebook)
     notebook.add(tab_combine, text="Merge GML")
+
+    tab_terrain = create_tab_terrain(notebook)
+    notebook.add(tab_terrain, text="Gelände (DGM)")
 
     tab_preview = create_tab_preview(notebook)
     notebook.add(tab_preview, text="Preview")

@@ -79,6 +79,17 @@ def create_readme_tab(notebook, style):
             "Schritt 3: Ausgabedatei festlegen: Geben Sie den Zielpfad und den Dateinamen für die zusammengeführte Datei ein.\n\n"
             "Schritt 4: Merge starten: Klicken Sie auf den 'Merge'-Button, um den Zusammenführungsprozess zu starten. Am Ende erhalten Sie eine konsolidierte CityGML-Datei."
         ),
+        "Gelände (DGM)": (
+            "Schritt 1: DGM-Daten herunterladen: Wählen Sie Ihr Bundesland aus und klicken Sie auf 'Portal öffnen'. "
+            "Laden Sie dort die DGM1-Kacheln für Ihr Gebiet herunter (XYZ- oder ASC-Format, auch gzip .gz).\n\n"
+            "Schritt 2: Kacheln hinzufügen: Fügen Sie die heruntergeladenen DGM-Kacheln über 'Hinzufügen' hinzu "
+            "oder ziehen Sie sie direkt in die Liste.\n\n"
+            "Schritt 3: Gebäude angeben: Wählen Sie die CityGML-Datei mit den Gebäuden. Das Gelände wird automatisch "
+            "auf den Gebäudebereich (+100 m Rand) zugeschnitten. Wichtig: Original-GML mit absoluten Höhen verwenden "
+            "(nicht die z0-konvertierte Datei), damit Gebäude und Gelände zusammenpassen.\n\n"
+            "Schritt 4: Ergebnis erzeugen: 'Vorschau' zeigt Gelände und Gebäude gemeinsam in 3D. "
+            "'Als IFC exportieren' erzeugt eine IFC4-Datei mit Gebäuden und Gelände (IfcGeographicElement)."
+        ),
         "Preview": (
             "Schritt 1: Datei auswählen: Klicken Sie auf das Eingabefeld und wählen Sie die gewünschte CityGML-Datei aus.\n\n"
             "Schritt 2: Datei laden: Klicken Sie auf den 'Laden'-Button, um die Datei einzulesen.\n\n"

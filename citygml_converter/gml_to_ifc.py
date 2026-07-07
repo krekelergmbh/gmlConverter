@@ -10,7 +10,7 @@ ns = {
     'bldg': 'http://www.opengis.net/citygml/building/1.0'
 }
 
-def convert_gml_to_ifc(input_path, output_path):
+def convert_gml_to_ifc(input_path, output_path, terrain=None):
     """
     Liest eine CityGML-Datei mit beliebig vielen Gebäuden ein.
     Für jedes <bldg:Building> wird ein IfcBuildingElementProxy erzeugt
@@ -19,6 +19,12 @@ def convert_gml_to_ifc(input_path, output_path):
     Koordinaten werden um (min_x, min_y, min_z) verschoben,
     und im IfcMapConversion dokumentieren wir nur Eastings/Northings
     (Z-Verschiebung wird NICHT als OrthHeight/OrthElevation gesetzt).
+
+    Optional: terrain=(vertices, faces) fügt ein Gelände (DGM) als
+    IfcGeographicElement mit IfcTriangulatedFaceSet hinzu.
+    vertices: Punktliste (N, 3) in denselben absoluten Koordinaten wie die GML;
+    faces: Dreiecksindizes (M, 3), 0-basiert. Gebäude und Gelände werden um
+    denselben Offset verschoben und passen dadurch exakt zusammen.
     """
 
     # 1) GML parsen
@@ -57,6 +63,15 @@ def convert_gml_to_ifc(input_path, output_path):
     min_x = min(c[0] for c in all_coords)
     min_y = min(c[1] for c in all_coords)
     min_z = min(c[2] for c in all_coords)
+
+    # Gelände in den gemeinsamen Offset einbeziehen, damit Gebäude und
+    # Gelände im IFC exakt zusammenpassen (Gelände liegt i.d.R. tiefer).
+    if terrain is not None:
+        t_vertices, t_faces = terrain
+        if len(t_vertices) > 0:
+            min_x = min(min_x, float(min(v[0] for v in t_vertices)))
+            min_y = min(min_y, float(min(v[1] for v in t_vertices)))
+            min_z = min(min_z, float(min(v[2] for v in t_vertices)))
 
     # 2) IFC-Datei erstellen
     ifc_file = ifcopenshell.file(schema="IFC4")
@@ -304,7 +319,59 @@ def convert_gml_to_ifc(input_path, output_path):
             RelatedObjects=[proxy]
         )
 
-    # 4) IFC-Datei speichern
+    # 4) Optionales Gelände (DGM) als IfcGeographicElement
+    if terrain is not None:
+        t_vertices, t_faces = terrain
+        if len(t_vertices) >= 3 and len(t_faces) > 0:
+            print(f"Füge Gelände hinzu: {len(t_vertices)} Punkte, {len(t_faces)} Dreiecke ...")
+            coord_list = [
+                (float(v[0]) - min_x, float(v[1]) - min_y, float(v[2]) - min_z)
+                for v in t_vertices
+            ]
+            point_list = ifc_file.create_entity("IfcCartesianPointList3D",
+                CoordList=coord_list
+            )
+            # IFC-Indizes sind 1-basiert
+            coord_index = [(int(f[0]) + 1, int(f[1]) + 1, int(f[2]) + 1) for f in t_faces]
+            tfs = ifc_file.create_entity("IfcTriangulatedFaceSet",
+                Coordinates=point_list,
+                CoordIndex=coord_index,
+                Closed=False
+            )
+            terrain_shape = ifc_file.create_entity("IfcShapeRepresentation",
+                ContextOfItems=geom_context,
+                RepresentationIdentifier="Body",
+                RepresentationType="Tessellation",
+                Items=[tfs]
+            )
+            terrain_pds = ifc_file.create_entity("IfcProductDefinitionShape",
+                Representations=[terrain_shape]
+            )
+            terrain_placement = ifc_file.create_entity("IfcLocalPlacement",
+                PlacementRelTo=site_local_placement,
+                RelativePlacement=ifc_file.create_entity("IfcAxis2Placement3D",
+                    Location=ifc_file.create_entity("IfcCartesianPoint",
+                                                    Coordinates=(0.0, 0.0, 0.0))
+                )
+            )
+            terrain_elem = ifc_file.create_entity("IfcGeographicElement",
+                GlobalId=ifcopenshell.guid.new(),
+                OwnerHistory=owner_history,
+                Name="Gelände (DGM)",
+                ObjectPlacement=terrain_placement,
+                Representation=terrain_pds,
+                PredefinedType="TERRAIN"
+            )
+            ifc_file.create_entity("IfcRelAggregates",
+                GlobalId=ifcopenshell.guid.new(),
+                OwnerHistory=owner_history,
+                RelatingObject=site,
+                RelatedObjects=[terrain_elem]
+            )
+        else:
+            print("Warnung: Gelände übergeben, aber ohne verwertbare Geometrie – übersprungen.")
+
+    # 5) IFC-Datei speichern
     ifc_file.write(output_path)
     print("GML->IFC Konvertierung erfolgreich abgeschlossen.")
     print(f"Datei gespeichert in: {output_path}")
