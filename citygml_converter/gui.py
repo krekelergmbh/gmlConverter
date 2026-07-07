@@ -178,12 +178,14 @@ def main():
     )
 
     # Combobox: echte Feldhoehe ueber padding (kein ipady-Hintergrund),
-    # Hover/Fokus-Rahmen in Krekeler-Rot statt Theme-Orange
-    style.configure("Krekeler.TCombobox", padding=(10, 7))
+    # Rahmen UND Pfeil in Krekeler-Rot statt Theme-Orange
+    style.configure("Krekeler.TCombobox", padding=(10, 7), arrowcolor="#892337")
     style.map("Krekeler.TCombobox",
         bordercolor=[("hover", "#892337"), ("focus", "#892337")],
         lightcolor=[("hover", "#892337"), ("focus", "#892337")],
-        darkcolor=[("hover", "#892337"), ("focus", "#892337")]
+        darkcolor=[("hover", "#892337"), ("focus", "#892337")],
+        arrowcolor=[("hover", "#701F2A"), ("pressed", "#701F2A"),
+                    ("focus", "#892337"), ("!disabled", "#892337")]
     )
 
     style.configure("Minimal.TNotebook",
