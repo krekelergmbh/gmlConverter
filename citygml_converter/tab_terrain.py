@@ -94,8 +94,15 @@ def create_tab_terrain(notebook):
                           state="readonly", width=26, font=("Segoe UI", 13),
                           height=len(DGM_PORTALE))  # alle 16 ohne Scrollbalken
     combo.pack(side="left", ipady=7)
-    # Text-Markierung nach Auswahl entfernen (sonst rot hinterlegt)
-    combo.bind("<<ComboboxSelected>>", lambda e: combo.selection_clear())
+    # Kein dauerhafter Fokusrahmen: nicht per Tab fokussierbar, und nach
+    # einer Auswahl Markierung + Fokus wieder abgeben
+    combo.configure(takefocus=False)
+
+    def _on_state_selected(_event):
+        combo.selection_clear()
+        tab.focus_set()
+
+    combo.bind("<<ComboboxSelected>>", _on_state_selected)
 
     def open_portal():
         url = DGM_PORTALE.get(state_var.get())
@@ -103,8 +110,9 @@ def create_tab_terrain(notebook):
             webbrowser.open_new_tab(url)
             print(f"[Gelände] Portal geöffnet: {state_var.get()}")
 
+    # fill="y": Button exakt so hoch wie die Combobox -> buendige Oberkanten
     ttkb.Button(portal_row, text="Portal öffnen", style="Grey.TButton",
-                command=open_portal).pack(side="left", padx=(10, 0))
+                command=open_portal).pack(side="left", padx=(10, 0), fill="y")
     ttkb.Label(tab,
                text="DGM1-Kacheln als XYZ- oder ASC-Datei herunterladen "
                     "(gzip .gz wird direkt unterstützt, ZIP bitte vorher entpacken).",
@@ -121,31 +129,26 @@ def create_tab_terrain(notebook):
         dgm_file_list.clear()
         listbox.delete(0, tk.END)
 
-    ttkb.Label(tab, text="2 · DGM-Kacheln", font=("Segoe UI Semibold", 13),
-               foreground=INK).grid(row=4, column=0, sticky="w", pady=(0, 5))
+    # Kopfzeile wie beim Pfadfeld: Label links, Buttons rechts, Liste volle Breite
+    header2 = ttkb.Frame(tab)
+    header2.grid(row=4, column=0, sticky="ew", pady=(0, 5))
+    ttkb.Label(header2, text="2 · DGM-Kacheln", font=("Segoe UI Semibold", 13),
+               foreground=INK).pack(side="left")
+    ttkb.Button(header2, text="Liste leeren", style="Grey.TButton",
+                command=clear_files).pack(side="right")
+    ttkb.Button(header2, text="Hinzufügen", style="Grey.TButton",
+                command=add_files).pack(side="right", padx=(0, 8))
 
-    # Buttons rechts neben der Liste – gleiches Muster wie beim Pfadfeld
     list_frame = ttkb.Frame(tab)
     list_frame.grid(row=5, column=0, sticky="ew")
-    list_frame.columnconfigure(0, weight=1)
-
-    box_frame = ttkb.Frame(list_frame)
-    box_frame.grid(row=0, column=0, sticky="nsew")
-    listbox = tk.Listbox(box_frame, height=5, activestyle="none",
+    listbox = tk.Listbox(list_frame, height=5, activestyle="none",
                          borderwidth=1, relief="solid", highlightthickness=0,
                          font=("Segoe UI", 13))
     listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-    scrollbar = ttkb.Scrollbar(box_frame, bootstyle="round", command=listbox.yview)
+    scrollbar = ttkb.Scrollbar(list_frame, bootstyle="round", command=listbox.yview)
     scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
     listbox.config(yscrollcommand=scrollbar.set)
     enable_file_drop(listbox, lambda paths: add_tile_paths(paths, dgm_file_list, listbox))
-
-    btns = ttkb.Frame(list_frame)
-    btns.grid(row=0, column=1, sticky="n", padx=(10, 0))
-    ttkb.Button(btns, text="Hinzufügen", style="Grey.TButton",
-                command=add_files).pack(fill="x")
-    ttkb.Button(btns, text="Liste leeren", style="Grey.TButton",
-                command=clear_files).pack(fill="x", pady=(6, 0))
 
     hint = ("DGM-Kacheln hierher ziehen oder über 'Hinzufügen' auswählen."
             if dnd_ready() else "Kacheln über 'Hinzufügen' auswählen.")

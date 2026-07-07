@@ -92,10 +92,20 @@ class FilePicker(ttkb.Frame):
         self._dialog = dialog
         self.columnconfigure(0, weight=1)
 
-        ncols = 3 if clearable else 2
-        ttkb.Label(self, text=label, font=("Segoe UI Semibold", 13),
-                   foreground=INK).grid(row=0, column=0, columnspan=ncols,
-                                        sticky="w", pady=(0, 5))
+        # Kopfzeile: Label links, Buttons rechts – das Feld darunter läuft
+        # dadurch in ALLEN Tabs über die volle Breite (einheitliche Zeilen)
+        header = ttkb.Frame(self)
+        header.grid(row=0, column=0, sticky="ew", pady=(0, 5))
+        ttkb.Label(header, text=label, font=("Segoe UI Semibold", 13),
+                   foreground=INK).pack(side="left")
+        if clearable:
+            ttkb.Button(header, text="Leeren", style="Grey.TButton",
+                        command=self.clear).pack(side="right")
+            ttkb.Button(header, text="Durchsuchen", style="Grey.TButton",
+                        command=self.browse).pack(side="right", padx=(0, 8))
+        else:
+            ttkb.Button(header, text="Durchsuchen", style="Grey.TButton",
+                        command=self.browse).pack(side="right")
 
         self.var = tk.StringVar(value=placeholder)
         self.entry = ttkb.Entry(self, textvariable=self.var, font=("Segoe UI", 13))
@@ -103,16 +113,10 @@ class FilePicker(ttkb.Frame):
         self.entry.configure(takefocus=False)
         self.entry.bind("<Button-1>", lambda e: self.browse())
 
-        ttkb.Button(self, text="Durchsuchen", style="Grey.TButton",
-                    command=self.browse).grid(row=1, column=1, padx=(10, 0), sticky="ew")
-        if clearable:
-            ttkb.Button(self, text="Leeren", style="Grey.TButton",
-                        command=self.clear).grid(row=1, column=2, padx=(8, 0), sticky="ew")
-
         hint = ("Datei hierher ziehen oder Feld anklicken" if dnd_ready()
                 else "Feld anklicken, um eine Datei auszuwählen")
         ttkb.Label(self, text=hint, font=("Segoe UI", 10),
-                   foreground=MUTED).grid(row=2, column=0, columnspan=ncols,
+                   foreground=MUTED).grid(row=2, column=0,
                                           sticky="w", pady=(5, 0))
 
         if dnd:
