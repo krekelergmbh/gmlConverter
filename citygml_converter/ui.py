@@ -83,16 +83,18 @@ class FilePicker(ttkb.Frame):
         placeholder  Platzhaltertext (gilt als "leer")
         dialog       Funktion ohne Argumente, die einen Pfad (oder "") zurückgibt
         dnd          Drag & Drop aktivieren (Default True)
+        clearable    zusätzlicher "Leeren"-Button (für optionale Felder)
     """
 
-    def __init__(self, parent, label, placeholder, dialog, dnd=True):
+    def __init__(self, parent, label, placeholder, dialog, dnd=True, clearable=False):
         super().__init__(parent)
         self._placeholder = placeholder
         self._dialog = dialog
         self.columnconfigure(0, weight=1)
 
+        ncols = 3 if clearable else 2
         ttkb.Label(self, text=label, font=("Segoe UI Semibold", 13),
-                   foreground=INK).grid(row=0, column=0, columnspan=2,
+                   foreground=INK).grid(row=0, column=0, columnspan=ncols,
                                         sticky="w", pady=(0, 5))
 
         self.var = tk.StringVar(value=placeholder)
@@ -103,11 +105,14 @@ class FilePicker(ttkb.Frame):
 
         ttkb.Button(self, text="Durchsuchen", style="Grey.TButton",
                     command=self.browse).grid(row=1, column=1, padx=(10, 0), sticky="ew")
+        if clearable:
+            ttkb.Button(self, text="Leeren", style="Grey.TButton",
+                        command=self.clear).grid(row=1, column=2, padx=(8, 0), sticky="ew")
 
         hint = ("Datei hierher ziehen oder Feld anklicken" if dnd_ready()
                 else "Feld anklicken, um eine Datei auszuwählen")
         ttkb.Label(self, text=hint, font=("Segoe UI", 10),
-                   foreground=MUTED).grid(row=2, column=0, columnspan=2,
+                   foreground=MUTED).grid(row=2, column=0, columnspan=ncols,
                                           sticky="w", pady=(5, 0))
 
         if dnd:
@@ -129,3 +134,7 @@ class FilePicker(ttkb.Frame):
 
     def set(self, path):
         self.var.set(path)
+
+    def clear(self):
+        """Setzt das Feld auf den Platzhalter zurück (Feld gilt wieder als leer)."""
+        self.var.set(self._placeholder)

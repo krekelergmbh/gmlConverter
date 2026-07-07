@@ -16,7 +16,7 @@ def create_tab_z0(notebook):
 
     inp = FilePicker(
         tab, "1 · CityGML-Eingabedatei", "Dateien durchsuchen...",
-        lambda: filedialog.askopenfilename(filetypes=[("CityGML Dateien", "*.gml")])
+        lambda: filedialog.askopenfilename(filetypes=[("CityGML Dateien", "*.gml *.xml")])
     )
     inp.grid(row=1, column=0, sticky="ew", pady=(0, 16))
 

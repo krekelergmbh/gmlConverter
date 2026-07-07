@@ -147,7 +147,9 @@ def create_tab_terrain(notebook):
     gml_picker = FilePicker(
         tab, "3 · CityGML-Gebäude (optional – leer lassen für reines Gelände)",
         "Dateien durchsuchen...",
-        lambda: filedialog.askopenfilename(filetypes=[("CityGML Dateien", "*.gml")])
+        lambda: filedialog.askopenfilename(
+            filetypes=[("CityGML Dateien", "*.gml *.xml")]),
+        clearable=True
     )
     gml_picker.grid(row=7, column=0, sticky="ew", pady=(0, 16))
 

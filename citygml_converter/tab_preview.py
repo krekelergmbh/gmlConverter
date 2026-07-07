@@ -27,7 +27,9 @@ def create_tab_preview(notebook):
 
     picker = FilePicker(
         tab, "CityGML-Gebäude (optional)", "Dateien durchsuchen...",
-        lambda: filedialog.askopenfilename(filetypes=[("CityGML Dateien", "*.gml")])
+        lambda: filedialog.askopenfilename(
+            filetypes=[("CityGML Dateien", "*.gml *.xml")]),
+        clearable=True
     )
     picker.grid(row=1, column=0, sticky="ew", pady=(0, 16))
 

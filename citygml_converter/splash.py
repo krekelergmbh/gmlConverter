@@ -5,6 +5,8 @@ from tkinter import ttk
 from PIL import Image, ImageTk
 import webbrowser
 
+from citygml_converter import __version__
+
 def resource_path(relative_path):
     """Gibt den absoluten Pfad zur Ressource zurück.
     Wenn die Anwendung gebündelt ist, wird sys._MEIPASS verwendet."""
@@ -103,7 +105,7 @@ def show_splash(duration=6000):
     loading_label.pack(side="left", anchor="w")
 
     # Version-Label rechtsbündig
-    version_label = tk.Label(bottom_frame, text="version 1.0.0", font=bottom_font, fg=bottom_fg)
+    version_label = tk.Label(bottom_frame, text=f"version {__version__}", font=bottom_font, fg=bottom_fg)
     version_label.pack(side="right", anchor="e")
 
     # Ladeanimation: Zyklus "Loading", "Loading.", "Loading..", "Loading..."

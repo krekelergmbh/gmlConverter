@@ -246,9 +246,10 @@ def main():
     sys.stdout = stdout_redirector
     sys.stderr = stderr_redirector
 
+    from citygml_converter import __version__
     version_label = ttkb.Label(
         console_frame,
-        text="version 1.0.0",
+        text=f"version {__version__}",
         style="FooterBrand.TLabel"
     )
     version_label.grid(row=1, column=0, sticky="w", pady=(5,0))

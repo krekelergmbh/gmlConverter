@@ -32,7 +32,7 @@ def create_tab_combine(notebook):
                 listbox.insert(tk.END, p)
 
     def add_gml_files():
-        paths = filedialog.askopenfilenames(filetypes=[("CityGML Dateien", "*.gml")])
+        paths = filedialog.askopenfilenames(filetypes=[("CityGML Dateien", "*.gml *.xml")])
         if paths:
             add_paths(list(paths))
 
