@@ -91,8 +91,11 @@ def create_tab_terrain(notebook):
     state_var = tk.StringVar(value="Brandenburg")
     combo = ttkb.Combobox(portal_row, textvariable=state_var,
                           values=list(DGM_PORTALE.keys()),
-                          state="readonly", width=26, font=("Segoe UI", 13))
+                          state="readonly", width=26, font=("Segoe UI", 13),
+                          height=len(DGM_PORTALE))  # alle 16 ohne Scrollbalken
     combo.pack(side="left", ipady=7)
+    # Text-Markierung nach Auswahl entfernen (sonst rot hinterlegt)
+    combo.bind("<<ComboboxSelected>>", lambda e: combo.selection_clear())
 
     def open_portal():
         url = DGM_PORTALE.get(state_var.get())
@@ -118,25 +121,31 @@ def create_tab_terrain(notebook):
         dgm_file_list.clear()
         listbox.delete(0, tk.END)
 
-    toolbar = ttkb.Frame(tab)
-    toolbar.grid(row=4, column=0, sticky="ew", pady=(0, 8))
-    ttkb.Label(toolbar, text="2 · DGM-Kacheln", font=("Segoe UI Semibold", 13),
-               foreground=INK).pack(side="left")
-    ttkb.Button(toolbar, text="Hinzufügen", style="Grey.TButton",
-                command=add_files).pack(side="right")
-    ttkb.Button(toolbar, text="Liste leeren", style="Grey.TButton",
-                command=clear_files).pack(side="right", padx=(0, 8))
+    ttkb.Label(tab, text="2 · DGM-Kacheln", font=("Segoe UI Semibold", 13),
+               foreground=INK).grid(row=4, column=0, sticky="w", pady=(0, 5))
 
+    # Buttons rechts neben der Liste – gleiches Muster wie beim Pfadfeld
     list_frame = ttkb.Frame(tab)
     list_frame.grid(row=5, column=0, sticky="ew")
-    listbox = tk.Listbox(list_frame, height=5, activestyle="none",
+    list_frame.columnconfigure(0, weight=1)
+
+    box_frame = ttkb.Frame(list_frame)
+    box_frame.grid(row=0, column=0, sticky="nsew")
+    listbox = tk.Listbox(box_frame, height=5, activestyle="none",
                          borderwidth=1, relief="solid", highlightthickness=0,
                          font=("Segoe UI", 13))
     listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-    scrollbar = ttkb.Scrollbar(list_frame, bootstyle="round", command=listbox.yview)
+    scrollbar = ttkb.Scrollbar(box_frame, bootstyle="round", command=listbox.yview)
     scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
     listbox.config(yscrollcommand=scrollbar.set)
     enable_file_drop(listbox, lambda paths: add_tile_paths(paths, dgm_file_list, listbox))
+
+    btns = ttkb.Frame(list_frame)
+    btns.grid(row=0, column=1, sticky="n", padx=(10, 0))
+    ttkb.Button(btns, text="Hinzufügen", style="Grey.TButton",
+                command=add_files).pack(fill="x")
+    ttkb.Button(btns, text="Liste leeren", style="Grey.TButton",
+                command=clear_files).pack(fill="x", pady=(6, 0))
 
     hint = ("DGM-Kacheln hierher ziehen oder über 'Hinzufügen' auswählen."
             if dnd_ready() else "Kacheln über 'Hinzufügen' auswählen.")

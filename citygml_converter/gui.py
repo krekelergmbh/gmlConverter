@@ -161,6 +161,20 @@ def main():
         foreground=[("hover", "#666666"), ("active", "#666666")]
     )
 
+    # Grauer Button in CTA-Groesse (fuer gleich grosse Button-Paare wie Laden/Vorschau)
+    style.configure(
+        "CTAGrey.TButton",
+        foreground="#666666",
+        background="#DDDDDD",
+        font=("Segoe UI Semibold", 16),
+        borderwidth=0,
+        padding=(26, 14)
+    )
+    style.map("CTAGrey.TButton",
+        background=[("hover", "#CCCCCC"), ("active", "#BBBBBB")],
+        foreground=[("hover", "#666666"), ("active", "#666666")]
+    )
+
     style.configure("Minimal.TNotebook",
         background="#FFFFFF",
         borderwidth=0

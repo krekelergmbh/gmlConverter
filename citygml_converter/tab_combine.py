@@ -85,29 +85,35 @@ def create_tab_combine(notebook):
             print("Fehler:", e)
 
     # --- Oberfläche -------------------------------------------------------
-    toolbar = ttkb.Frame(tab)
-    toolbar.grid(row=1, column=0, sticky="ew", pady=(0, 8))
-    ttkb.Label(toolbar, text="Eingabedateien", font=("Segoe UI Semibold", 13),
-               foreground=INK).pack(side="left")
-    ttkb.Button(toolbar, text="Hinzufügen", style="Grey.TButton",
-                command=add_gml_files).pack(side="right")
-    ttkb.Button(toolbar, text="Liste leeren", style="Grey.TButton",
-                command=clear_gml_files).pack(side="right", padx=(0, 8))
+    ttkb.Label(tab, text="Eingabedateien", font=("Segoe UI Semibold", 13),
+               foreground=INK).grid(row=1, column=0, sticky="w", pady=(0, 5))
 
+    # Buttons rechts neben der Liste – gleiches Muster wie beim Pfadfeld
     list_frame = ttkb.Frame(tab)
     list_frame.grid(row=2, column=0, sticky="nsew", pady=(0, 4))
+    list_frame.columnconfigure(0, weight=1)
+    list_frame.rowconfigure(0, weight=1)
 
-    listbox = tk.Listbox(list_frame, height=8, activestyle="none",
+    box_frame = ttkb.Frame(list_frame)
+    box_frame.grid(row=0, column=0, sticky="nsew")
+    listbox = tk.Listbox(box_frame, height=8, activestyle="none",
                          borderwidth=1, relief="solid", highlightthickness=0,
-                         font=("Segoe UI", 12))
+                         font=("Segoe UI", 13))
     listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-    scrollbar = ttkb.Scrollbar(list_frame, bootstyle="round", command=listbox.yview)
+    scrollbar = ttkb.Scrollbar(box_frame, bootstyle="round", command=listbox.yview)
     scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
     listbox.config(yscrollcommand=scrollbar.set)
 
     # Drag & Drop: Dateien direkt in die Liste ziehen
     enable_file_drop(listbox, add_paths)
+
+    btns = ttkb.Frame(list_frame)
+    btns.grid(row=0, column=1, sticky="n", padx=(10, 0))
+    ttkb.Button(btns, text="Hinzufügen", style="Grey.TButton",
+                command=add_gml_files).pack(fill="x")
+    ttkb.Button(btns, text="Liste leeren", style="Grey.TButton",
+                command=clear_gml_files).pack(fill="x", pady=(6, 0))
 
     hint = ("Tipp: GML-Dateien direkt in die Liste ziehen." if dnd_ready()
             else "Dateien über 'Hinzufügen' auswählen.")
