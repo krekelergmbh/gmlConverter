@@ -120,8 +120,10 @@ def main():
     style = ttkb.Style()
     style.configure(".", background="#FFFFFF")
 
-    # Combobox-Dropdown-Liste erbt sonst den kleinen Tk-Default
+    # Combobox-Dropdown-Liste: Font + Auswahl in Krekeler-Rot statt Theme-Orange
     app.option_add("*TCombobox*Listbox.font", ("Segoe UI", 13))
+    app.option_add("*TCombobox*Listbox.selectBackground", "#892337")
+    app.option_add("*TCombobox*Listbox.selectForeground", "#FFFFFF")
 
     style.configure(
         "Krekeler.TButton",
@@ -173,6 +175,15 @@ def main():
     style.map("CTAGrey.TButton",
         background=[("hover", "#CCCCCC"), ("active", "#BBBBBB")],
         foreground=[("hover", "#666666"), ("active", "#666666")]
+    )
+
+    # Combobox: echte Feldhoehe ueber padding (kein ipady-Hintergrund),
+    # Hover/Fokus-Rahmen in Krekeler-Rot statt Theme-Orange
+    style.configure("Krekeler.TCombobox", padding=(10, 7))
+    style.map("Krekeler.TCombobox",
+        bordercolor=[("hover", "#892337"), ("focus", "#892337")],
+        lightcolor=[("hover", "#892337"), ("focus", "#892337")],
+        darkcolor=[("hover", "#892337"), ("focus", "#892337")]
     )
 
     style.configure("Minimal.TNotebook",

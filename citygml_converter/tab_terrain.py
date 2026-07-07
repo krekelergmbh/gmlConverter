@@ -92,8 +92,9 @@ def create_tab_terrain(notebook):
     combo = ttkb.Combobox(portal_row, textvariable=state_var,
                           values=list(DGM_PORTALE.keys()),
                           state="readonly", width=26, font=("Segoe UI", 13),
-                          height=len(DGM_PORTALE))  # alle 16 ohne Scrollbalken
-    combo.pack(side="left", ipady=7)
+                          height=len(DGM_PORTALE),  # alle 16 ohne Scrollbalken
+                          style="Krekeler.TCombobox")
+    combo.pack(side="left")
     # Kein dauerhafter Fokusrahmen: nicht per Tab fokussierbar, und nach
     # einer Auswahl Markierung + Fokus wieder abgeben
     combo.configure(takefocus=False)
