@@ -35,7 +35,8 @@ def convert_gml_to_ifc(input_path, output_path, terrain=None):
     all_coords = []
     buildings = root.findall('.//core:cityObjectMember/bldg:Building', ns)
     if not buildings:
-        print("Keine <bldg:Building> gefunden.")
+        print("Keine <bldg:Building> gefunden (CityGML 1.0 erwartet) – "
+              "es wird keine IFC-Datei geschrieben.")
         return
 
     for bldg in buildings:
@@ -130,16 +131,17 @@ def convert_gml_to_ifc(input_path, output_path, terrain=None):
         Description="ETRS89 / UTM Zone 33N"
     )
 
-    # (D) IfcMapConversion ohne OrthElevation
+    # (D) IfcMapConversion – OrthogonalHeight ist in IFC4 Pflicht und
+    # dokumentiert die Z-Verschiebung (mit Gelände ist min_z variabel)
     map_conversion = ifc_file.create_entity("IfcMapConversion",
         SourceCRS=geom_context,
         TargetCRS=projected_crs,
         Eastings=min_x,
         Northings=min_y,
+        OrthogonalHeight=min_z,
         XAxisAbscissa=1.0,
         XAxisOrdinate=0.0,
         Scale=1.0
-        # OrthElevation= weglassen -> vermeidet Fehlermeldungen
     )
 
     project.RepresentationContexts = [geom_context]

@@ -1,7 +1,8 @@
 import ttkbootstrap as ttkb
 import tkinter as tk
 from tkinter import filedialog
-from citygml_converter.ui import section_header, FilePicker, enable_file_drop, MUTED, INK
+from citygml_converter.ui import (section_header, FilePicker, enable_file_drop,
+                                  dnd_ready, MUTED, INK)
 
 try:
     from citygml_converter.combine import combine_gml_files
@@ -108,8 +109,9 @@ def create_tab_combine(notebook):
     # Drag & Drop: Dateien direkt in die Liste ziehen
     enable_file_drop(listbox, add_paths)
 
-    ttkb.Label(tab, text="Tipp: GML-Dateien direkt in die Liste ziehen.",
-               font=("Segoe UI", 10), foreground=MUTED)\
+    hint = ("Tipp: GML-Dateien direkt in die Liste ziehen." if dnd_ready()
+            else "Dateien über 'Hinzufügen' auswählen.")
+    ttkb.Label(tab, text=hint, font=("Segoe UI", 10), foreground=MUTED)\
         .grid(row=3, column=0, sticky="w", pady=(0, 14))
 
     out_picker = FilePicker(
