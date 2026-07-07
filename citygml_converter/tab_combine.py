@@ -21,7 +21,7 @@ def create_tab_combine(notebook):
         tab,
         "Merge GML",
         "Führt mehrere CityGML-Dateien zu einer einzigen Datei zusammen."
-    ).grid(row=0, column=0, sticky="ew", pady=(0, 18))
+    ).grid(row=0, column=0, sticky="ew", pady=(0, 20))
 
     # --- Aktionen ---------------------------------------------------------
     def add_paths(paths):
@@ -90,7 +90,7 @@ def create_tab_combine(notebook):
 
     # Buttons rechts neben der Liste – gleiches Muster wie beim Pfadfeld
     list_frame = ttkb.Frame(tab)
-    list_frame.grid(row=2, column=0, sticky="nsew", pady=(0, 4))
+    list_frame.grid(row=2, column=0, sticky="nsew")
     list_frame.columnconfigure(0, weight=1)
     list_frame.rowconfigure(0, weight=1)
 
@@ -115,17 +115,17 @@ def create_tab_combine(notebook):
     ttkb.Button(btns, text="Liste leeren", style="Grey.TButton",
                 command=clear_gml_files).pack(fill="x", pady=(6, 0))
 
-    hint = ("Tipp: GML-Dateien direkt in die Liste ziehen." if dnd_ready()
-            else "Dateien über 'Hinzufügen' auswählen.")
+    hint = ("GML-Dateien hierher ziehen oder über 'Hinzufügen' auswählen."
+            if dnd_ready() else "Dateien über 'Hinzufügen' auswählen.")
     ttkb.Label(tab, text=hint, font=("Segoe UI", 10), foreground=MUTED)\
-        .grid(row=3, column=0, sticky="w", pady=(0, 14))
+        .grid(row=3, column=0, sticky="w", pady=(5, 16))
 
     out_picker = FilePicker(
         tab, "Ausgabedatei (Speicherort)", "Speicherort...",
         lambda: filedialog.asksaveasfilename(
             defaultextension=".gml", filetypes=[("CityGML Dateien", "*.gml")])
     )
-    out_picker.grid(row=4, column=0, sticky="ew", pady=(0, 18))
+    out_picker.grid(row=4, column=0, sticky="ew", pady=(0, 22))
 
     ttkb.Button(tab, text="Zusammenführen", style="CTA.TButton",
                 command=run_combine).grid(row=5, column=0, sticky="w")
