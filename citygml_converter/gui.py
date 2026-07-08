@@ -228,13 +228,15 @@ def main():
     )
 
     # Unter-Tabs (zweite Ebene): etwas kleiner, aktiver Tab in Krekeler-Rot,
-    # OHNE eigene Trennlinie (sonst zwei graue Linien untereinander)
+    # OHNE eigene Trennlinie; tabmargins=0 -> erster Untertab nutzt links
+    # die Gesamtumrandung und die Zeile hängt ohne Abstand an der Hauptlinie
     style.configure("Sub.TNotebook",
         background="#FFFFFF",
         borderwidth=0,
         bordercolor="#FFFFFF",
         lightcolor="#FFFFFF",
-        darkcolor="#FFFFFF"
+        darkcolor="#FFFFFF",
+        tabmargins=[0, 0, 0, 0]
     )
     # Untertabs: umrandete Kästen, direkt unter der Linie "angehängt"
     style.configure("Sub.TNotebook.Tab",
@@ -285,12 +287,37 @@ def main():
     # 1) Gebäude (GML) – Untertabs: Pick GML (Start), z0, GML2IFC, Merge
     gml_frame = ttkb.Frame(notebook, style="TFrame")
     gml_notebook = ttkb.Notebook(gml_frame, style="Sub.TNotebook")
-    gml_notebook.pack(fill=BOTH, expand=True, pady=(4, 0))
+    gml_notebook.pack(fill=BOTH, expand=True)
 
     gml_notebook.add(create_tab_map(gml_notebook), text="Pick GML")
     gml_notebook.add(create_tab_z0(gml_notebook), text="z0 Converter")
     gml_notebook.add(create_tab_ifc(gml_notebook), text="GML2IFC")
     gml_notebook.add(create_tab_combine(gml_notebook), text="Merge GML")
+
+    # Graue Linie unter der Untertab-Zeile – nur bis zum rechten Rand
+    # des letzten Untertabs (Breite wird an der echten Tab-Zeile gemessen)
+    sub_underline = tk.Frame(gml_notebook, background="#CED4DA", height=1)
+
+    def _place_sub_underline(event=None):
+        try:
+            gml_notebook.update_idletasks()
+            selected = gml_notebook.nametowidget(gml_notebook.select())
+            pane_y = selected.winfo_y()
+            if pane_y <= 2:
+                return
+            y_mid = pane_y // 2
+            right = 0
+            for x in range(0, max(gml_notebook.winfo_width(), 1), 2):
+                if gml_notebook.identify(x, y_mid):
+                    right = x + 2
+            if right > 0:
+                sub_underline.place(x=0, y=pane_y - 1, width=right, height=1)
+                sub_underline.lift()
+        except (tk.TclError, KeyError):
+            pass
+
+    gml_notebook.bind("<Configure>", _place_sub_underline)
+    app.after(150, _place_sub_underline)
 
     notebook.add(gml_frame, text="Gebäude (GML)")
 
@@ -330,7 +357,7 @@ def main():
 
     brand_label = ttkb.Label(
         console_frame,
-        text="Made in Brandenburg",
+        text="made by mwo on planet earth",
         style="FooterBrand.TLabel"
     )
     brand_label.grid(row=1, column=1, sticky="e", pady=(5,0))
