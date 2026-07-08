@@ -234,18 +234,21 @@ def main():
     #   ───────────────────┘              KEINE Linie links vom ersten Tab,
     #                                     Linie darunter endet am letzten Tab
     # ------------------------------------------------------------------
-    TAB_LINE = "#CED4DA"
+    # kräftig genug für hochauflösende Displays (1px hellgrau ist unsichtbar)
+    TAB_LINE = "#999999"
     FG_MUTED = "#666666"
 
     main_bar = tk.Frame(notebook_frame, background="#FFFFFF")
     main_bar.pack(side=tk.TOP, fill=tk.X)
-    tk.Frame(notebook_frame, background=TAB_LINE, height=1)\
-        .pack(side=tk.TOP, fill=tk.X)
-    main_line_anchor = notebook_frame.pack_slaves()[-1]  # für pack(after=...)
+    main_line = tk.Frame(notebook_frame, background=TAB_LINE, height=1)
+    main_line.pack(side=tk.TOP, fill=tk.X)
 
-    # Untertab-Zeile: Wrapper nur so breit wie die Tabs -> die Linie
-    # darunter endet automatisch am rechten Rand des letzten Untertabs
+    # Untertab-Zeile: IMMER gepackt mit fester Höhe (verhindert, dass die
+    # Karte beim Tab-Wechsel erst groß und dann kleiner gezeichnet wird);
+    # Wrapper nur so breit wie die Tabs -> die Linie darunter endet
+    # automatisch am rechten Rand des letzten Untertabs
     sub_holder = tk.Frame(notebook_frame, background="#FFFFFF")
+    sub_holder.pack(side=tk.TOP, fill=tk.X)
     sub_wrap = tk.Frame(sub_holder, background="#FFFFFF")
     sub_wrap.pack(anchor="w")
     sub_bar = tk.Frame(sub_wrap, background="#FFFFFF")
@@ -287,10 +290,10 @@ def main():
                           font=("Segoe UI Semibold", 12) if active
                           else ("Segoe UI", 12))
         if tab_state["main"] == "Gebäude (GML)":
-            sub_holder.pack(side=tk.TOP, fill=tk.X, after=main_line_anchor)
+            sub_wrap.pack(anchor="w")
             frames[tab_state["sub"]].tkraise()
         else:
-            sub_holder.pack_forget()
+            sub_wrap.pack_forget()
             frames[tab_state["main"]].tkraise()
 
     def select_main(name):
@@ -302,11 +305,12 @@ def main():
         tab_state["sub"] = name
         _refresh_tabs()
 
+    # Haupttabs: erster Tab beginnt bündig links (wie die Überschrift)
     for name in MAIN_TABS:
         lbl = tk.Label(main_bar, text=name, background="#FFFFFF",
                        foreground=FG_MUTED, font=("Segoe UI Semibold", 14),
-                       padx=16, pady=8, cursor="hand2")
-        lbl.pack(side=tk.LEFT)
+                       padx=0, pady=8, cursor="hand2")
+        lbl.pack(side=tk.LEFT, padx=(0, 32))
         lbl.bind("<Button-1>", lambda e, n=name: select_main(n))
         main_labels[name] = lbl
 
@@ -320,6 +324,11 @@ def main():
         # senkrechter Trenner nach jedem Untertab (auch rechts am Ende)
         tk.Frame(sub_bar, background=TAB_LINE, width=1)\
             .pack(side=tk.LEFT, fill=tk.Y)
+
+    # Feste Höhe der Untertab-Zeile einfrieren (kein Nachladen/Springen)
+    notebook_frame.update_idletasks()
+    sub_holder.configure(height=sub_wrap.winfo_reqheight())
+    sub_holder.pack_propagate(False)
 
     _refresh_tabs()
 
