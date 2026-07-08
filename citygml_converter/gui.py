@@ -200,62 +200,8 @@ def main():
                     ("focus", "#892337"), ("!disabled", "#892337")]
     )
 
-    # Haupt-Tabs: flache Beschriftung, darunter zieht die Theme-Linie
-    # der Notebook-Fläche über die volle Breite durch
-    style.configure("Minimal.TNotebook",
-        background="#FFFFFF",
-        borderwidth=0
-    )
-    style.configure("Minimal.TNotebook.Tab",
-        foreground="#666666",
-        background="#FFFFFF",
-        font=("Segoe UI Semibold", 14),
-        padding=(16, 10),
-        borderwidth=0,
-        bordercolor="#FFFFFF",
-        lightcolor="#FFFFFF",
-        darkcolor="#FFFFFF"
-    )
-    style.map("Minimal.TNotebook.Tab",
-        foreground=[
-            ("selected", "#000000"),
-            ("!selected", "#666666")
-        ],
-        background=[
-            ("selected", "#FFFFFF"),
-            ("!selected", "#FFFFFF")
-        ]
-    )
-
-    # Unter-Tabs (zweite Ebene): etwas kleiner, aktiver Tab in Krekeler-Rot,
-    # OHNE eigene Trennlinie; tabmargins=0 -> erster Untertab nutzt links
-    # die Gesamtumrandung und die Zeile hängt ohne Abstand an der Hauptlinie
-    style.configure("Sub.TNotebook",
-        background="#FFFFFF",
-        borderwidth=0,
-        bordercolor="#FFFFFF",
-        lightcolor="#FFFFFF",
-        darkcolor="#FFFFFF",
-        tabmargins=[0, 0, 0, 0]
-    )
-    # Untertabs: umrandete Kästen, direkt unter der Linie "angehängt"
-    style.configure("Sub.TNotebook.Tab",
-        foreground="#666666",
-        background="#FFFFFF",
-        font=("Segoe UI", 12),
-        padding=(14, 7),
-        borderwidth=1
-    )
-    style.map("Sub.TNotebook.Tab",
-        foreground=[
-            ("selected", "#892337"),
-            ("!selected", "#666666")
-        ],
-        background=[
-            ("selected", "#FFFFFF"),
-            ("!selected", "#FFFFFF")
-        ]
-    )
+    # Tab-Leisten werden als eigene Elemente gezeichnet (volle Kontrolle
+    # über jede Linie) – siehe Aufbau unten im Tab-Bereich.
 
     style.configure("FooterBrand.TLabel",
         foreground="#999999",
@@ -280,56 +226,102 @@ def main():
     notebook_frame = ttkb.Frame(outer_frame, style="TFrame")
     notebook_frame.pack(side=tk.TOP, fill=BOTH, expand=True)
 
-    notebook = ttkb.Notebook(notebook_frame, style="Minimal.TNotebook")
-    notebook.pack(fill=BOTH, expand=True)
+    # ------------------------------------------------------------------
+    # Eigene Tab-Leisten (statt ttk.Notebook) – volle Kontrolle über Linien:
+    #   [Haupttabs, flach]
+    #   ─────────────────────────────── volle Breite
+    #   |Pick GML|z0|GML2IFC|Merge GML|   Untertabs: Trenner innen + rechts,
+    #   ───────────────────┘              KEINE Linie links vom ersten Tab,
+    #                                     Linie darunter endet am letzten Tab
+    # ------------------------------------------------------------------
+    TAB_LINE = "#CED4DA"
+    FG_MUTED = "#666666"
 
-    # Haupt-Tabs mit Unter-Tabs
-    # 1) Gebäude (GML) – Untertabs: Pick GML (Start), z0, GML2IFC, Merge
-    gml_frame = ttkb.Frame(notebook, style="TFrame")
-    gml_notebook = ttkb.Notebook(gml_frame, style="Sub.TNotebook")
-    gml_notebook.pack(fill=BOTH, expand=True)
+    main_bar = tk.Frame(notebook_frame, background="#FFFFFF")
+    main_bar.pack(side=tk.TOP, fill=tk.X)
+    tk.Frame(notebook_frame, background=TAB_LINE, height=1)\
+        .pack(side=tk.TOP, fill=tk.X)
+    main_line_anchor = notebook_frame.pack_slaves()[-1]  # für pack(after=...)
 
-    gml_notebook.add(create_tab_map(gml_notebook), text="Pick GML")
-    gml_notebook.add(create_tab_z0(gml_notebook), text="z0 Converter")
-    gml_notebook.add(create_tab_ifc(gml_notebook), text="GML2IFC")
-    gml_notebook.add(create_tab_combine(gml_notebook), text="Merge GML")
+    # Untertab-Zeile: Wrapper nur so breit wie die Tabs -> die Linie
+    # darunter endet automatisch am rechten Rand des letzten Untertabs
+    sub_holder = tk.Frame(notebook_frame, background="#FFFFFF")
+    sub_wrap = tk.Frame(sub_holder, background="#FFFFFF")
+    sub_wrap.pack(anchor="w")
+    sub_bar = tk.Frame(sub_wrap, background="#FFFFFF")
+    sub_bar.pack(anchor="w")
+    tk.Frame(sub_wrap, background=TAB_LINE, height=1).pack(fill=tk.X)
 
-    # Graue Linie unter der Untertab-Zeile – nur bis zum rechten Rand
-    # des letzten Untertabs (Breite wird an der echten Tab-Zeile gemessen)
-    sub_underline = tk.Frame(gml_notebook, background="#CED4DA", height=1)
+    content = tk.Frame(notebook_frame, background="#FFFFFF")
+    content.pack(side=tk.TOP, fill=BOTH, expand=True)
+    content.rowconfigure(0, weight=1)
+    content.columnconfigure(0, weight=1)
 
-    def _place_sub_underline(event=None):
-        try:
-            gml_notebook.update_idletasks()
-            selected = gml_notebook.nametowidget(gml_notebook.select())
-            pane_y = selected.winfo_y()
-            if pane_y <= 2:
-                return
-            y_mid = pane_y // 2
-            right = 0
-            for x in range(0, max(gml_notebook.winfo_width(), 1), 2):
-                if gml_notebook.identify(x, y_mid):
-                    right = x + 2
-            if right > 0:
-                sub_underline.place(x=0, y=pane_y - 1, width=right, height=1)
-                sub_underline.lift()
-        except (tk.TclError, KeyError):
-            pass
+    # Alle Inhalte im selben Grid-Feld, Auswahl per tkraise
+    frames = {
+        "Pick GML": create_tab_map(content),
+        "z0 Converter": create_tab_z0(content),
+        "GML2IFC": create_tab_ifc(content),
+        "Merge GML": create_tab_combine(content),
+        "Gelände (DGM)": create_tab_terrain(content),
+        "Workflow": create_tab_workflow(content),
+        "Preview": create_tab_preview(content),
+        "README": create_readme_tab(content, style),
+    }
+    for f in frames.values():
+        f.grid(row=0, column=0, sticky="nsew")
 
-    gml_notebook.bind("<Configure>", _place_sub_underline)
-    app.after(150, _place_sub_underline)
+    MAIN_TABS = ["Gebäude (GML)", "Gelände (DGM)", "Workflow", "Preview", "README"]
+    SUB_TABS = ["Pick GML", "z0 Converter", "GML2IFC", "Merge GML"]
+    tab_state = {"main": "Gebäude (GML)", "sub": "Pick GML"}
+    main_labels = {}
+    sub_labels = {}
 
-    notebook.add(gml_frame, text="Gebäude (GML)")
+    def _refresh_tabs():
+        for name, lbl in main_labels.items():
+            lbl.configure(foreground="#000000" if name == tab_state["main"]
+                          else FG_MUTED)
+        for name, lbl in sub_labels.items():
+            active = (name == tab_state["sub"])
+            lbl.configure(foreground="#892337" if active else FG_MUTED,
+                          font=("Segoe UI Semibold", 12) if active
+                          else ("Segoe UI", 12))
+        if tab_state["main"] == "Gebäude (GML)":
+            sub_holder.pack(side=tk.TOP, fill=tk.X, after=main_line_anchor)
+            frames[tab_state["sub"]].tkraise()
+        else:
+            sub_holder.pack_forget()
+            frames[tab_state["main"]].tkraise()
 
-    # 2) Gelände (DGM)
-    notebook.add(create_tab_terrain(notebook), text="Gelände (DGM)")
+    def select_main(name):
+        tab_state["main"] = name
+        _refresh_tabs()
 
-    # 3) Workflow-Assistent
-    notebook.add(create_tab_workflow(notebook), text="Workflow")
+    def select_sub(name):
+        tab_state["main"] = "Gebäude (GML)"
+        tab_state["sub"] = name
+        _refresh_tabs()
 
-    # 4) Preview, 5) README
-    notebook.add(create_tab_preview(notebook), text="Preview")
-    notebook.add(create_readme_tab(notebook, style), text="README")
+    for name in MAIN_TABS:
+        lbl = tk.Label(main_bar, text=name, background="#FFFFFF",
+                       foreground=FG_MUTED, font=("Segoe UI Semibold", 14),
+                       padx=16, pady=8, cursor="hand2")
+        lbl.pack(side=tk.LEFT)
+        lbl.bind("<Button-1>", lambda e, n=name: select_main(n))
+        main_labels[name] = lbl
+
+    for name in SUB_TABS:
+        lbl = tk.Label(sub_bar, text=name, background="#FFFFFF",
+                       foreground=FG_MUTED, font=("Segoe UI", 12),
+                       padx=14, pady=6, cursor="hand2")
+        lbl.pack(side=tk.LEFT, fill=tk.Y)
+        lbl.bind("<Button-1>", lambda e, n=name: select_sub(n))
+        sub_labels[name] = lbl
+        # senkrechter Trenner nach jedem Untertab (auch rechts am Ende)
+        tk.Frame(sub_bar, background=TAB_LINE, width=1)\
+            .pack(side=tk.LEFT, fill=tk.Y)
+
+    _refresh_tabs()
 
     # Console Frame
     console_frame = ttkb.Frame(outer_frame, style="TFrame")
