@@ -115,7 +115,7 @@ class FilePicker(ttkb.Frame):
 
         hint = ("Datei hierher ziehen oder Feld anklicken" if dnd_ready()
                 else "Feld anklicken, um eine Datei auszuwählen")
-        ttkb.Label(self, text=hint, font=("Segoe UI", 10),
+        ttkb.Label(self, text=hint, font=("Segoe UI", 11),
                    foreground=MUTED).grid(row=2, column=0,
                                           sticky="w", pady=(5, 0))
 

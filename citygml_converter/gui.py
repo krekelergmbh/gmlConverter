@@ -200,18 +200,23 @@ def main():
                     ("focus", "#892337"), ("!disabled", "#892337")]
     )
 
+    # Haupt-Tabs: flach (keine Kästen/Linien), Hierarchie über Farbe
     style.configure("Minimal.TNotebook",
         background="#FFFFFF",
         borderwidth=0,
-        bordercolor="#DDDDDD",
+        bordercolor="#FFFFFF",
         lightcolor="#FFFFFF",
-        darkcolor="#DDDDDD"
+        darkcolor="#FFFFFF"
     )
     style.configure("Minimal.TNotebook.Tab",
         foreground="#666666",
         background="#FFFFFF",
-        font=("Segoe UI", 14),
-        padding=(16, 10)
+        font=("Segoe UI Semibold", 14),
+        padding=(16, 10),
+        borderwidth=0,
+        bordercolor="#FFFFFF",
+        lightcolor="#FFFFFF",
+        darkcolor="#FFFFFF"
     )
     style.map("Minimal.TNotebook.Tab",
         foreground=[
@@ -237,7 +242,11 @@ def main():
         foreground="#666666",
         background="#FFFFFF",
         font=("Segoe UI", 12),
-        padding=(14, 7)
+        padding=(14, 7),
+        borderwidth=0,
+        bordercolor="#FFFFFF",
+        lightcolor="#FFFFFF",
+        darkcolor="#FFFFFF"
     )
     style.map("Sub.TNotebook.Tab",
         foreground=[

@@ -117,7 +117,7 @@ def create_tab_terrain(notebook):
     ttkb.Label(tab,
                text="DGM1-Kacheln als XYZ- oder ASC-Datei herunterladen "
                     "(gzip .gz wird direkt unterstützt, ZIP bitte vorher entpacken).",
-               font=("Segoe UI", 10), foreground=MUTED)\
+               font=("Segoe UI", 11), foreground=MUTED)\
         .grid(row=3, column=0, sticky="w", pady=(5, 16))
 
     # ---- 2 · Kachel-Liste ------------------------------------------------
@@ -153,7 +153,7 @@ def create_tab_terrain(notebook):
 
     hint = ("DGM-Kacheln hierher ziehen oder über 'Hinzufügen' auswählen."
             if dnd_ready() else "Kacheln über 'Hinzufügen' auswählen.")
-    ttkb.Label(tab, text=hint, font=("Segoe UI", 10), foreground=MUTED)\
+    ttkb.Label(tab, text=hint, font=("Segoe UI", 11), foreground=MUTED)\
         .grid(row=6, column=0, sticky="w", pady=(5, 16))
 
     # ---- 3 · Gebäude-GML (optional) + 4 · IFC-Ausgabe --------------------

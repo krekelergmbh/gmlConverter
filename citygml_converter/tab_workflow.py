@@ -154,7 +154,7 @@ def create_tab_workflow(notebook):
             .grid(row=row, column=0, sticky="w", pady=pady)
 
     def _hint(parent, text, row, pady=(0, 14)):
-        ttkb.Label(parent, text=text, font=("Segoe UI", 10), foreground=MUTED,
+        ttkb.Label(parent, text=text, font=("Segoe UI", 11), foreground=MUTED,
                    wraplength=820, justify="left")\
             .grid(row=row, column=0, sticky="w", pady=pady)
 
