@@ -200,13 +200,11 @@ def main():
                     ("focus", "#892337"), ("!disabled", "#892337")]
     )
 
-    # Haupt-Tabs: flach (keine Kästen/Linien), Hierarchie über Farbe
+    # Haupt-Tabs: flache Beschriftung, darunter zieht die Theme-Linie
+    # der Notebook-Fläche über die volle Breite durch
     style.configure("Minimal.TNotebook",
         background="#FFFFFF",
-        borderwidth=0,
-        bordercolor="#FFFFFF",
-        lightcolor="#FFFFFF",
-        darkcolor="#FFFFFF"
+        borderwidth=0
     )
     style.configure("Minimal.TNotebook.Tab",
         foreground="#666666",
@@ -238,15 +236,13 @@ def main():
         lightcolor="#FFFFFF",
         darkcolor="#FFFFFF"
     )
+    # Untertabs: umrandete Kästen, direkt unter der Linie "angehängt"
     style.configure("Sub.TNotebook.Tab",
         foreground="#666666",
         background="#FFFFFF",
         font=("Segoe UI", 12),
         padding=(14, 7),
-        borderwidth=0,
-        bordercolor="#FFFFFF",
-        lightcolor="#FFFFFF",
-        darkcolor="#FFFFFF"
+        borderwidth=1
     )
     style.map("Sub.TNotebook.Tab",
         foreground=[
@@ -289,7 +285,7 @@ def main():
     # 1) Gebäude (GML) – Untertabs: Pick GML (Start), z0, GML2IFC, Merge
     gml_frame = ttkb.Frame(notebook, style="TFrame")
     gml_notebook = ttkb.Notebook(gml_frame, style="Sub.TNotebook")
-    gml_notebook.pack(fill=BOTH, expand=True, pady=(8, 0))
+    gml_notebook.pack(fill=BOTH, expand=True, pady=(4, 0))
 
     gml_notebook.add(create_tab_map(gml_notebook), text="Pick GML")
     gml_notebook.add(create_tab_z0(gml_notebook), text="z0 Converter")
