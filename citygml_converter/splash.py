@@ -69,7 +69,7 @@ def show_splash(duration=6000):
 
     # Untertitel in kleiner, grauer Schrift
     subtitle_label = tk.Label(content_frame, text="by mwo @ Krekeler Architekten Generalplaner GmbH",
-                              font=("Segoe UI", 10), fg="gray")
+                              font=("Segoe UI", 11), fg="gray")
     subtitle_label.pack()
 
     # Separator als lange Unterstriche
@@ -97,7 +97,7 @@ def show_splash(duration=6000):
     bottom_frame.pack(side="bottom", fill="x", padx=10, pady=(0,10))
 
     # Einheitliche Schriftart für beide Labels (klein, grau)
-    bottom_font = ("Segoe UI", 10)
+    bottom_font = ("Segoe UI", 11)
     bottom_fg = "gray"
 
     # Ladeanimation-Label linksbündig
