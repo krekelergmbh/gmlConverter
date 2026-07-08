@@ -56,6 +56,17 @@ def create_readme_tab(notebook, style):
     
     # Definition der Abschnitte mit detaillierten Anleitungen
     sections = {
+        "Workflow": (
+            "Der Workflow-Assistent führt Sie ohne Vorkenntnisse Schritt für Schritt zum fertigen Ergebnis.\n\n"
+            "Schritt 1: Wählen Sie, welche Daten Sie benötigen – Gebäude (GML), Gelände (DGM) oder beides.\n\n"
+            "Schritt 2: Wählen Sie Ihr Bundesland und öffnen Sie die vorgeschlagenen Download-Portale. "
+            "Laden Sie dort die Daten für Ihr Gebiet herunter (ZIP-Dateien bitte entpacken).\n\n"
+            "Schritt 3: Geben Sie die heruntergeladenen Dateien an – mehrere GML-Dateien werden automatisch vereint, "
+            "das Gelände wird automatisch auf den Gebäudebereich zugeschnitten.\n\n"
+            "Schritt 4: Bestätigen Sie die Optionen (z. B. IFC-Modell oder bearbeitete GML, Höhen auf Null, 3D-Vorschau).\n\n"
+            "Schritt 5: Speicherort wählen und auf 'Jetzt ausführen' klicken – der Assistent erledigt alle Schritte "
+            "in der richtigen Reihenfolge und zeigt auf Wunsch die 3D-Vorschau."
+        ),
         "Pick GML": (
             "Schritt 1: Navigieren Sie in der interaktiven Deutschlandkarte zu dem Bundesland, aus dem Sie CityGML LoD2-Daten beziehen möchten.\n\n"
             "Schritt 2: Bewegen Sie die Maus über das gewünschte Bundesland. Das Bundesland wird rot hervorgehoben.\n\n"

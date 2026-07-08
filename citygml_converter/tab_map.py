@@ -5,6 +5,26 @@ import ttkbootstrap as ttkb
 import webbrowser
 import json
 
+# LoD2-Geoportale der Bundesländer (auch vom Workflow-Assistenten genutzt)
+GML_PORTALE = {
+    "Baden-Württemberg": "https://opengeodata.lgl-bw.de/#/(sidenav:product/lod2)",
+    "Bayern": "https://geodaten.bayern.de/opengeodata/OpenDataDetail.html?pn=lod2",
+    "Berlin": "https://gdi.berlin.de/geonetwork/srv/ger/catalog.search#/metadata/3c7c49af-00a4-3bcd-bc00-20e7f0f1b7bf",
+    "Brandenburg": "https://data.geobasis-bb.de/geobasis/daten/3d_gebaeude/lod2_gml/",
+    "Bremen": "https://metaver.de/trefferanzeige?docuuid=226971C2-6677-4B79-95F3-C5311F1275C8",
+    "Hamburg": "https://suche.transparenz.hamburg.de/dataset/3d-stadtmodell-hamburg",
+    "Hessen": "https://gds.hessen.de/INTERSHOP/web/WFS/HLBG-Geodaten-Site/de_DE/-/EUR/ViewDownloadcenter-Start?path=3D-Daten/3D-Geb%C3%A4udemodelle/3D-Geb%C3%A4udemodelle%20LoD2",
+    "Mecklenburg-Vorpommern": "https://laiv.geodaten-mv.de/afgvk/Geotopographie/Download?produkt=LOD2",
+    "Niedersachsen": "https://ni-lgln-opengeodata.hub.arcgis.com/",
+    "Nordrhein-Westfalen": "https://www.opengeodata.nrw.de/produkte/geobasis/3dg/lod2_gml/",
+    "Rheinland-Pfalz": "https://geoshop.rlp.de/opendata-geb3dlo.html",
+    "Saarland": "https://mediaproxy.tvtropes.org/width/1200/https://static.tvtropes.org/pmwiki/pub/images/spongebob_meme_64.png",
+    "Sachsen": "https://www.geodaten.sachsen.de/downloadbereich-digitale-3d-stadtmodelle-4875.html",
+    "Sachsen-Anhalt": "https://www.lvermgeo.sachsen-anhalt.de/de/startseite.html",
+    "Schleswig-Holstein": "https://geodaten.schleswig-holstein.de/gaialight-sh/_apps/dladownload/dl-lod2.html",
+    "Thüringen": "https://geoportal.thueringen.de/gdi-th/download-offene-geodaten/download-3d-gebaeudedaten"
+}
+
 def create_tab_map(notebook):
     tab_map = ttkb.Frame(notebook)
     tab_map.columnconfigure(0, weight=1)
@@ -32,24 +52,7 @@ def create_tab_map(notebook):
         return tab_map
 
     # Dictionary: Zuordnung von Bundeslandnamen zu den LoD2-Geoportal-URLs
-    geoportal_urls = {
-        "Baden-Württemberg": "https://opengeodata.lgl-bw.de/#/(sidenav:product/lod2)",
-        "Bayern": "https://geodaten.bayern.de/opengeodata/OpenDataDetail.html?pn=lod2",
-        "Berlin": "https://gdi.berlin.de/geonetwork/srv/ger/catalog.search#/metadata/3c7c49af-00a4-3bcd-bc00-20e7f0f1b7bf",
-        "Brandenburg": "https://data.geobasis-bb.de/geobasis/daten/3d_gebaeude/lod2_gml/",
-        "Bremen": "https://metaver.de/trefferanzeige?docuuid=226971C2-6677-4B79-95F3-C5311F1275C8",
-        "Hamburg": "https://suche.transparenz.hamburg.de/dataset/3d-stadtmodell-hamburg",
-        "Hessen": "https://gds.hessen.de/INTERSHOP/web/WFS/HLBG-Geodaten-Site/de_DE/-/EUR/ViewDownloadcenter-Start?path=3D-Daten/3D-Geb%C3%A4udemodelle/3D-Geb%C3%A4udemodelle%20LoD2",
-        "Mecklenburg-Vorpommern": "https://laiv.geodaten-mv.de/afgvk/Geotopographie/Download?produkt=LOD2",
-        "Niedersachsen": "https://ni-lgln-opengeodata.hub.arcgis.com/",
-        "Nordrhein-Westfalen": "https://www.opengeodata.nrw.de/produkte/geobasis/3dg/lod2_gml/",
-        "Rheinland-Pfalz": "https://geoshop.rlp.de/opendata-geb3dlo.html",
-        "Saarland": "https://mediaproxy.tvtropes.org/width/1200/https://static.tvtropes.org/pmwiki/pub/images/spongebob_meme_64.png",
-        "Sachsen": "https://www.geodaten.sachsen.de/downloadbereich-digitale-3d-stadtmodelle-4875.html",
-        "Sachsen-Anhalt": "https://www.lvermgeo.sachsen-anhalt.de/de/startseite.html",
-        "Schleswig-Holstein": "https://geodaten.schleswig-holstein.de/gaialight-sh/_apps/dladownload/dl-lod2.html",
-        "Thüringen": "https://geoportal.thueringen.de/gdi-th/download-offene-geodaten/download-3d-gebaeudedaten"
-    }
+    geoportal_urls = GML_PORTALE
 
     def draw_map():
         canvas.delete("all")

@@ -16,6 +16,7 @@ from citygml_converter.tab_combine import create_tab_combine
 from citygml_converter.tab_terrain import create_tab_terrain
 from citygml_converter.tab_preview import create_tab_preview
 from citygml_converter.tab_map import create_tab_map
+from citygml_converter.tab_workflow import create_tab_workflow
 
 # Splash-Funktion importieren
 from citygml_converter.splash import show_splash
@@ -209,6 +210,28 @@ def main():
         ]
     )
 
+    # Unter-Tabs (zweite Ebene): etwas kleiner, aktiver Tab in Krekeler-Rot
+    style.configure("Sub.TNotebook",
+        background="#FFFFFF",
+        borderwidth=0
+    )
+    style.configure("Sub.TNotebook.Tab",
+        foreground="#666666",
+        background="#FFFFFF",
+        font=("Segoe UI", 12),
+        padding=(14, 7)
+    )
+    style.map("Sub.TNotebook.Tab",
+        foreground=[
+            ("selected", "#892337"),
+            ("!selected", "#666666")
+        ],
+        background=[
+            ("selected", "#FFFFFF"),
+            ("!selected", "#FFFFFF")
+        ]
+    )
+
     style.configure("FooterBrand.TLabel",
         foreground="#999999",
         background="#FFFFFF",
@@ -235,27 +258,28 @@ def main():
     notebook = ttkb.Notebook(notebook_frame, style="Minimal.TNotebook")
     notebook.pack(fill=BOTH, expand=True)
 
-    # Tabs (README ganz ans Ende)
-    tab_map = create_tab_map(notebook)
-    notebook.add(tab_map, text="Pick GML")
+    # Haupt-Tabs mit Unter-Tabs
+    # 1) Gebäude (GML) – Untertabs: Pick GML (Start), z0, GML2IFC, Merge
+    gml_frame = ttkb.Frame(notebook, style="TFrame")
+    gml_notebook = ttkb.Notebook(gml_frame, style="Sub.TNotebook")
+    gml_notebook.pack(fill=BOTH, expand=True, pady=(8, 0))
 
-    tab_z0 = create_tab_z0(notebook)
-    notebook.add(tab_z0, text="z0 Converter")
+    gml_notebook.add(create_tab_map(gml_notebook), text="Pick GML")
+    gml_notebook.add(create_tab_z0(gml_notebook), text="z0 Converter")
+    gml_notebook.add(create_tab_ifc(gml_notebook), text="GML2IFC")
+    gml_notebook.add(create_tab_combine(gml_notebook), text="Merge GML")
 
-    tab_ifc = create_tab_ifc(notebook)
-    notebook.add(tab_ifc, text="GML2IFC")
+    notebook.add(gml_frame, text="Gebäude (GML)")
 
-    tab_combine = create_tab_combine(notebook)
-    notebook.add(tab_combine, text="Merge GML")
+    # 2) Gelände (DGM)
+    notebook.add(create_tab_terrain(notebook), text="Gelände (DGM)")
 
-    tab_terrain = create_tab_terrain(notebook)
-    notebook.add(tab_terrain, text="Gelände (DGM)")
+    # 3) Workflow-Assistent
+    notebook.add(create_tab_workflow(notebook), text="Workflow")
 
-    tab_preview = create_tab_preview(notebook)
-    notebook.add(tab_preview, text="Preview")
-
-    tab_start = create_readme_tab(notebook, style)
-    notebook.add(tab_start, text="README")
+    # 4) Preview, 5) README
+    notebook.add(create_tab_preview(notebook), text="Preview")
+    notebook.add(create_readme_tab(notebook, style), text="README")
 
     # Console Frame
     console_frame = ttkb.Frame(outer_frame, style="TFrame")
