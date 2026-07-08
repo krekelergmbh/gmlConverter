@@ -117,14 +117,22 @@ def main():
     except Exception as e:
         print(f"Fehler beim Setzen des Taskleisten-Icons: {e}")
 
-    # Beim Start maximiert/Vollbild öffnen (plattformübergreifend)
-    try:
-        app.state("zoomed")                     # Windows / die meisten Plattformen
-    except Exception:
+    # Beim Start maximiert öffnen – erst NACH dem Mapping des Fensters:
+    # ein zu früh gesetztes 'zoomed' erzeugt unter Windows gelegentlich ein
+    # Pseudo-Maximiert mit Randspalt (Klick neben dem Schließen-Kreuz trifft
+    # dann das Fenster dahinter)
+    app.minsize(1100, 700)
+
+    def _maximize():
         try:
-            app.attributes("-zoomed", True)     # Linux
+            app.state("zoomed")                 # Windows / die meisten Plattformen
         except Exception:
-            app.geometry(f"{app.winfo_screenwidth()}x{app.winfo_screenheight()}+0+0")
+            try:
+                app.attributes("-zoomed", True)  # Linux
+            except Exception:
+                app.geometry(f"{app.winfo_screenwidth()}x{app.winfo_screenheight()}+0+0")
+
+    app.after(50, _maximize)
 
     # Eigenes Theme: journal-Klon mit Krekeler-Rot als Primärfarbe –
     # färbt Schalter, Radiobuttons, Fokusränder und Textauswahl markenkonform
@@ -252,8 +260,9 @@ def main():
 
     main_bar = tk.Frame(notebook_frame, background="#FFFFFF", autostyle=False)
     main_bar.pack(side=tk.TOP, fill=tk.X)
+    # Trennlinie beginnt auf der linken Flucht von Überschrift/Tabs
     tk.Frame(notebook_frame, background=TAB_LINE, height=1, autostyle=False)\
-        .pack(side=tk.TOP, fill=tk.X)
+        .pack(side=tk.TOP, fill=tk.X, padx=(TAB_INDENT, 0))
 
     content = tk.Frame(notebook_frame, background="#FFFFFF", autostyle=False)
     content.pack(side=tk.TOP, fill=BOTH, expand=True)
@@ -302,8 +311,8 @@ def main():
         for name, lbl in sub_labels.items():
             active = (name == tab_state["sub"])
             lbl.configure(foreground=BRAND if active else FG_MUTED,
-                          font=("Segoe UI Semibold", 12) if active
-                          else ("Segoe UI", 12))
+                          font=("Segoe UI Semibold", 13) if active
+                          else ("Segoe UI", 13))
         main_frames[tab_state["main"]].tkraise()
         sub_frames[tab_state["sub"]].tkraise()
 
@@ -319,7 +328,7 @@ def main():
     # Haupttabs: erster Tab startet auf der gemeinsamen linken Flucht
     for i, name in enumerate(MAIN_TABS):
         lbl = tk.Label(main_bar, text=name, background="#FFFFFF",
-                       foreground=FG_MUTED, font=("Segoe UI Semibold", 14),
+                       foreground=FG_MUTED, font=("Segoe UI Semibold", 16),
                        padx=0, pady=8, cursor="hand2", autostyle=False)
         lbl.pack(side=tk.LEFT, padx=((TAB_INDENT if i == 0 else 0), 32))
         lbl.bind("<Button-1>", lambda e, n=name: select_main(n))
@@ -328,7 +337,7 @@ def main():
     # Untertabs: reine Beschriftungen ohne Umrandung
     for i, name in enumerate(SUB_TABS):
         lbl = tk.Label(sub_bar, text=name, background="#FFFFFF",
-                       foreground=FG_MUTED, font=("Segoe UI", 12),
+                       foreground=FG_MUTED, font=("Segoe UI", 13),
                        padx=0, pady=6, cursor="hand2", autostyle=False)
         lbl.pack(side=tk.LEFT, padx=((TAB_INDENT if i == 0 else 0), 28))
         lbl.bind("<Button-1>", lambda e, n=name: select_sub(n))
