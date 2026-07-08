@@ -107,6 +107,15 @@ def main():
         app.iconbitmap(icon_path)
     except Exception as e:
         print(f"Fehler beim Setzen des Icons: {e}")
+    # Taskleiste nutzt das GROSSE Fenster-Icon (iconphoto) – ohne dieses
+    # zeigt Windows die Tk-Feder statt des Krekeler-Icons
+    try:
+        from PIL import Image, ImageTk
+        _icon_img = ImageTk.PhotoImage(Image.open(icon_path))
+        app.iconphoto(True, _icon_img)
+        app._taskbar_icon = _icon_img  # Referenz halten (sonst GC)
+    except Exception as e:
+        print(f"Fehler beim Setzen des Taskleisten-Icons: {e}")
 
     # Beim Start maximiert/Vollbild öffnen (plattformübergreifend)
     try:
@@ -227,81 +236,76 @@ def main():
     notebook_frame.pack(side=tk.TOP, fill=BOTH, expand=True)
 
     # ------------------------------------------------------------------
-    # Eigene Tab-Leisten (statt ttk.Notebook) – volle Kontrolle über Linien:
-    #   [Haupttabs, flach]
-    #   ─────────────────────────────── volle Breite
-    #   |Pick GML|z0|GML2IFC|Merge GML|   Untertabs: Trenner innen + rechts,
-    #   ───────────────────┘              KEINE Linie links vom ersten Tab,
-    #                                     Linie darunter endet am letzten Tab
-    # ------------------------------------------------------------------
+    # Eigene Tab-Leisten (statt ttk.Notebook):
+    #   [Haupttabs, flach – aktiver Tab Krekeler-Rot]
+    #   ─────────────────────────────────────────── Trennlinie volle Breite
+    #   Pick GML  z0 Converter  ...   Untertabs OHNE Umrandung, leben IM
+    #   (Inhalt)                      Gebäude-Frame -> Tab-Wechsel sind reine
+    #                                 tkraise-Aufrufe (kein Lag/Springen)
     # WICHTIG: autostyle=False – ttkbootstrap überschreibt sonst die
     # Hintergrundfarben klassischer tk-Widgets mit Theme-Weiß
-    # (deshalb waren die Linien bisher unsichtbar)
+    # ------------------------------------------------------------------
     TAB_LINE = "#999999"
     FG_MUTED = "#666666"
-    TAB_INDENT = 14  # linke Flucht = Textbeginn der Untertabs
+    BRAND = "#892337"
+    TAB_INDENT = 14  # gemeinsame linke Flucht
 
     main_bar = tk.Frame(notebook_frame, background="#FFFFFF", autostyle=False)
     main_bar.pack(side=tk.TOP, fill=tk.X)
-    main_line = tk.Frame(notebook_frame, background=TAB_LINE, height=1,
-                         autostyle=False)
-    main_line.pack(side=tk.TOP, fill=tk.X)
-
-    # Untertab-Zeile (nur bei 'Gebäude (GML)' sichtbar): Wrapper nur so
-    # breit wie die Tabs -> die Linie darunter endet automatisch am
-    # rechten Rand des letzten Untertabs
-    sub_holder = tk.Frame(notebook_frame, background="#FFFFFF", autostyle=False)
-    sub_wrap = tk.Frame(sub_holder, background="#FFFFFF", autostyle=False)
-    sub_wrap.pack(anchor="w")
-    sub_bar = tk.Frame(sub_wrap, background="#FFFFFF", autostyle=False)
-    sub_bar.pack(anchor="w")
-    tk.Frame(sub_wrap, background=TAB_LINE, height=1, autostyle=False)\
-        .pack(fill=tk.X)
+    tk.Frame(notebook_frame, background=TAB_LINE, height=1, autostyle=False)\
+        .pack(side=tk.TOP, fill=tk.X)
 
     content = tk.Frame(notebook_frame, background="#FFFFFF", autostyle=False)
     content.pack(side=tk.TOP, fill=BOTH, expand=True)
     content.rowconfigure(0, weight=1)
     content.columnconfigure(0, weight=1)
 
-    # Alle Inhalte im selben Grid-Feld, Auswahl per tkraise
-    frames = {
-        "Pick GML": create_tab_map(content),
-        "z0 Converter": create_tab_z0(content),
-        "GML2IFC": create_tab_ifc(content),
-        "Merge GML": create_tab_combine(content),
+    # Gebäude-Frame: enthält die Untertab-Zeile UND die vier Unterinhalte –
+    # dadurch ändert ein Haupttab-Wechsel nie die Geometrie (nur tkraise)
+    gebaeude_frame = tk.Frame(content, background="#FFFFFF", autostyle=False)
+    sub_bar = tk.Frame(gebaeude_frame, background="#FFFFFF", autostyle=False)
+    sub_bar.pack(side=tk.TOP, fill=tk.X)
+    sub_content = tk.Frame(gebaeude_frame, background="#FFFFFF", autostyle=False)
+    sub_content.pack(side=tk.TOP, fill=BOTH, expand=True)
+    sub_content.rowconfigure(0, weight=1)
+    sub_content.columnconfigure(0, weight=1)
+
+    sub_frames = {
+        "Pick GML": create_tab_map(sub_content),
+        "z0 Converter": create_tab_z0(sub_content),
+        "GML2IFC": create_tab_ifc(sub_content),
+        "Merge GML": create_tab_combine(sub_content),
+    }
+    for f in sub_frames.values():
+        f.grid(row=0, column=0, sticky="nsew")
+
+    main_frames = {
+        "Gebäude (GML)": gebaeude_frame,
         "Gelände (DGM)": create_tab_terrain(content),
         "Workflow": create_tab_workflow(content),
         "Preview": create_tab_preview(content),
         "README": create_readme_tab(content, style),
     }
-    for f in frames.values():
+    for f in main_frames.values():
         f.grid(row=0, column=0, sticky="nsew")
 
-    MAIN_TABS = ["Gebäude (GML)", "Gelände (DGM)", "Workflow", "Preview", "README"]
-    SUB_TABS = ["Pick GML", "z0 Converter", "GML2IFC", "Merge GML"]
+    MAIN_TABS = list(main_frames.keys())
+    SUB_TABS = list(sub_frames.keys())
     tab_state = {"main": "Gebäude (GML)", "sub": "Pick GML"}
     main_labels = {}
     sub_labels = {}
 
     def _refresh_tabs():
         for name, lbl in main_labels.items():
-            lbl.configure(foreground="#000000" if name == tab_state["main"]
+            lbl.configure(foreground=BRAND if name == tab_state["main"]
                           else FG_MUTED)
         for name, lbl in sub_labels.items():
             active = (name == tab_state["sub"])
-            lbl.configure(foreground="#892337" if active else FG_MUTED,
+            lbl.configure(foreground=BRAND if active else FG_MUTED,
                           font=("Segoe UI Semibold", 12) if active
                           else ("Segoe UI", 12))
-        # Erst Geometrie ändern und anwenden, DANN Inhalt heben – so wird
-        # z. B. die Pick-GML-Karte direkt in Endgröße gezeichnet (kein Springen)
-        if tab_state["main"] == "Gebäude (GML)":
-            sub_holder.pack(side=tk.TOP, fill=tk.X, after=main_line)
-            notebook_frame.update_idletasks()
-            frames[tab_state["sub"]].tkraise()
-        else:
-            sub_holder.pack_forget()
-            notebook_frame.update_idletasks()
-            frames[tab_state["main"]].tkraise()
+        main_frames[tab_state["main"]].tkraise()
+        sub_frames[tab_state["sub"]].tkraise()
 
     def select_main(name):
         tab_state["main"] = name
@@ -312,7 +316,7 @@ def main():
         tab_state["sub"] = name
         _refresh_tabs()
 
-    # Haupttabs: erster Tab startet auf der Flucht der Untertab-Texte
+    # Haupttabs: erster Tab startet auf der gemeinsamen linken Flucht
     for i, name in enumerate(MAIN_TABS):
         lbl = tk.Label(main_bar, text=name, background="#FFFFFF",
                        foreground=FG_MUTED, font=("Segoe UI Semibold", 14),
@@ -321,16 +325,14 @@ def main():
         lbl.bind("<Button-1>", lambda e, n=name: select_main(n))
         main_labels[name] = lbl
 
-    for name in SUB_TABS:
+    # Untertabs: reine Beschriftungen ohne Umrandung
+    for i, name in enumerate(SUB_TABS):
         lbl = tk.Label(sub_bar, text=name, background="#FFFFFF",
                        foreground=FG_MUTED, font=("Segoe UI", 12),
-                       padx=TAB_INDENT, pady=6, cursor="hand2", autostyle=False)
-        lbl.pack(side=tk.LEFT, fill=tk.Y)
+                       padx=0, pady=6, cursor="hand2", autostyle=False)
+        lbl.pack(side=tk.LEFT, padx=((TAB_INDENT if i == 0 else 0), 28))
         lbl.bind("<Button-1>", lambda e, n=name: select_sub(n))
         sub_labels[name] = lbl
-        # senkrechter Trenner nach jedem Untertab (auch rechts am Ende)
-        tk.Frame(sub_bar, background=TAB_LINE, width=1, autostyle=False)\
-            .pack(side=tk.LEFT, fill=tk.Y)
 
     _refresh_tabs()
 
