@@ -117,8 +117,19 @@ def main():
         except Exception:
             app.geometry(f"{app.winfo_screenwidth()}x{app.winfo_screenheight()}+0+0")
 
-    # Dein Style-Code
+    # Eigenes Theme: journal-Klon mit Krekeler-Rot als Primärfarbe –
+    # färbt Schalter, Radiobuttons, Fokusränder und Textauswahl markenkonform
+    from ttkbootstrap.style import ThemeDefinition
+    from ttkbootstrap.themes.standard import STANDARD_THEMES
+    _colors = dict(STANDARD_THEMES["journal"]["colors"])
+    _colors["primary"] = "#892337"
+    _colors["selectbg"] = "#892337"
+    _colors["selectfg"] = "#FFFFFF"
+
     style = ttkb.Style()
+    style.register_theme(ThemeDefinition(name="krekeler", colors=_colors,
+                                         themetype="light"))
+    style.theme_use("krekeler")
     style.configure(".", background="#FFFFFF")
 
     # Combobox-Dropdown-Liste: Font + Auswahl in Krekeler-Rot statt Theme-Orange
@@ -191,7 +202,10 @@ def main():
 
     style.configure("Minimal.TNotebook",
         background="#FFFFFF",
-        borderwidth=0
+        borderwidth=0,
+        bordercolor="#DDDDDD",
+        lightcolor="#FFFFFF",
+        darkcolor="#DDDDDD"
     )
     style.configure("Minimal.TNotebook.Tab",
         foreground="#666666",
@@ -210,10 +224,14 @@ def main():
         ]
     )
 
-    # Unter-Tabs (zweite Ebene): etwas kleiner, aktiver Tab in Krekeler-Rot
+    # Unter-Tabs (zweite Ebene): etwas kleiner, aktiver Tab in Krekeler-Rot,
+    # OHNE eigene Trennlinie (sonst zwei graue Linien untereinander)
     style.configure("Sub.TNotebook",
         background="#FFFFFF",
-        borderwidth=0
+        borderwidth=0,
+        bordercolor="#FFFFFF",
+        lightcolor="#FFFFFF",
+        darkcolor="#FFFFFF"
     )
     style.configure("Sub.TNotebook.Tab",
         foreground="#666666",
