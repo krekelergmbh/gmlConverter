@@ -218,7 +218,7 @@ def main():
     header_frame.pack(side=tk.TOP, fill=tk.X, pady=(0, 8))
     ttkb.Label(header_frame, text="gmlConverter",
                font=("Segoe UI Semibold", 22), foreground="#222222",
-               background="#FFFFFF").pack(side=tk.LEFT)
+               background="#FFFFFF").pack(side=tk.LEFT, padx=(14, 0))
     ttkb.Label(header_frame, text="CityGML-Werkzeuge",
                font=("Segoe UI", 13), foreground="#8A8A8A",
                background="#FFFFFF").pack(side=tk.LEFT, padx=(14, 0), pady=(9, 0))
@@ -234,28 +234,31 @@ def main():
     #   ───────────────────┘              KEINE Linie links vom ersten Tab,
     #                                     Linie darunter endet am letzten Tab
     # ------------------------------------------------------------------
-    # kräftig genug für hochauflösende Displays (1px hellgrau ist unsichtbar)
+    # WICHTIG: autostyle=False – ttkbootstrap überschreibt sonst die
+    # Hintergrundfarben klassischer tk-Widgets mit Theme-Weiß
+    # (deshalb waren die Linien bisher unsichtbar)
     TAB_LINE = "#999999"
     FG_MUTED = "#666666"
+    TAB_INDENT = 14  # linke Flucht = Textbeginn der Untertabs
 
-    main_bar = tk.Frame(notebook_frame, background="#FFFFFF")
+    main_bar = tk.Frame(notebook_frame, background="#FFFFFF", autostyle=False)
     main_bar.pack(side=tk.TOP, fill=tk.X)
-    main_line = tk.Frame(notebook_frame, background=TAB_LINE, height=1)
+    main_line = tk.Frame(notebook_frame, background=TAB_LINE, height=1,
+                         autostyle=False)
     main_line.pack(side=tk.TOP, fill=tk.X)
 
-    # Untertab-Zeile: IMMER gepackt mit fester Höhe (verhindert, dass die
-    # Karte beim Tab-Wechsel erst groß und dann kleiner gezeichnet wird);
-    # Wrapper nur so breit wie die Tabs -> die Linie darunter endet
-    # automatisch am rechten Rand des letzten Untertabs
-    sub_holder = tk.Frame(notebook_frame, background="#FFFFFF")
-    sub_holder.pack(side=tk.TOP, fill=tk.X)
-    sub_wrap = tk.Frame(sub_holder, background="#FFFFFF")
+    # Untertab-Zeile (nur bei 'Gebäude (GML)' sichtbar): Wrapper nur so
+    # breit wie die Tabs -> die Linie darunter endet automatisch am
+    # rechten Rand des letzten Untertabs
+    sub_holder = tk.Frame(notebook_frame, background="#FFFFFF", autostyle=False)
+    sub_wrap = tk.Frame(sub_holder, background="#FFFFFF", autostyle=False)
     sub_wrap.pack(anchor="w")
-    sub_bar = tk.Frame(sub_wrap, background="#FFFFFF")
+    sub_bar = tk.Frame(sub_wrap, background="#FFFFFF", autostyle=False)
     sub_bar.pack(anchor="w")
-    tk.Frame(sub_wrap, background=TAB_LINE, height=1).pack(fill=tk.X)
+    tk.Frame(sub_wrap, background=TAB_LINE, height=1, autostyle=False)\
+        .pack(fill=tk.X)
 
-    content = tk.Frame(notebook_frame, background="#FFFFFF")
+    content = tk.Frame(notebook_frame, background="#FFFFFF", autostyle=False)
     content.pack(side=tk.TOP, fill=BOTH, expand=True)
     content.rowconfigure(0, weight=1)
     content.columnconfigure(0, weight=1)
@@ -289,11 +292,15 @@ def main():
             lbl.configure(foreground="#892337" if active else FG_MUTED,
                           font=("Segoe UI Semibold", 12) if active
                           else ("Segoe UI", 12))
+        # Erst Geometrie ändern und anwenden, DANN Inhalt heben – so wird
+        # z. B. die Pick-GML-Karte direkt in Endgröße gezeichnet (kein Springen)
         if tab_state["main"] == "Gebäude (GML)":
-            sub_wrap.pack(anchor="w")
+            sub_holder.pack(side=tk.TOP, fill=tk.X, after=main_line)
+            notebook_frame.update_idletasks()
             frames[tab_state["sub"]].tkraise()
         else:
-            sub_wrap.pack_forget()
+            sub_holder.pack_forget()
+            notebook_frame.update_idletasks()
             frames[tab_state["main"]].tkraise()
 
     def select_main(name):
@@ -305,30 +312,25 @@ def main():
         tab_state["sub"] = name
         _refresh_tabs()
 
-    # Haupttabs: erster Tab beginnt bündig links (wie die Überschrift)
-    for name in MAIN_TABS:
+    # Haupttabs: erster Tab startet auf der Flucht der Untertab-Texte
+    for i, name in enumerate(MAIN_TABS):
         lbl = tk.Label(main_bar, text=name, background="#FFFFFF",
                        foreground=FG_MUTED, font=("Segoe UI Semibold", 14),
-                       padx=0, pady=8, cursor="hand2")
-        lbl.pack(side=tk.LEFT, padx=(0, 32))
+                       padx=0, pady=8, cursor="hand2", autostyle=False)
+        lbl.pack(side=tk.LEFT, padx=((TAB_INDENT if i == 0 else 0), 32))
         lbl.bind("<Button-1>", lambda e, n=name: select_main(n))
         main_labels[name] = lbl
 
     for name in SUB_TABS:
         lbl = tk.Label(sub_bar, text=name, background="#FFFFFF",
                        foreground=FG_MUTED, font=("Segoe UI", 12),
-                       padx=14, pady=6, cursor="hand2")
+                       padx=TAB_INDENT, pady=6, cursor="hand2", autostyle=False)
         lbl.pack(side=tk.LEFT, fill=tk.Y)
         lbl.bind("<Button-1>", lambda e, n=name: select_sub(n))
         sub_labels[name] = lbl
         # senkrechter Trenner nach jedem Untertab (auch rechts am Ende)
-        tk.Frame(sub_bar, background=TAB_LINE, width=1)\
+        tk.Frame(sub_bar, background=TAB_LINE, width=1, autostyle=False)\
             .pack(side=tk.LEFT, fill=tk.Y)
-
-    # Feste Höhe der Untertab-Zeile einfrieren (kein Nachladen/Springen)
-    notebook_frame.update_idletasks()
-    sub_holder.configure(height=sub_wrap.winfo_reqheight())
-    sub_holder.pack_propagate(False)
 
     _refresh_tabs()
 
