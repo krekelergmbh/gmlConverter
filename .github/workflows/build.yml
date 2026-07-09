@@ -139,15 +139,35 @@ jobs:
       - name: Build mit PyInstaller
         run: pyinstaller gmlConverter.spec --noconfirm
 
-      - name: Exe als ZIP packen (onefile - eine Datei, kein _internal)
+      - name: Ordner als ZIP packen (Test-Artefakt, schneller Start)
         shell: pwsh
-        run: Compress-Archive -Path dist/gmlConverter.exe -DestinationPath gmlConverter-windows.zip
+        run: Compress-Archive -Path dist/gmlConverter -DestinationPath gmlConverter-windows.zip
 
       - name: Artefakt hochladen
         uses: actions/upload-artifact@v4
         with:
           name: gmlConverter-windows
           path: gmlConverter-windows.zip
+          if-no-files-found: error
+
+      - name: Inno Setup installieren
+        run: choco install innosetup -y --no-progress
+
+      - name: App-Version auslesen
+        shell: pwsh
+        run: |
+          $v = (Select-String -Path citygml_converter/__init__.py -Pattern '__version__\s*=\s*"([^"]+)"').Matches[0].Groups[1].Value
+          echo "APPVER=$v" >> $env:GITHUB_ENV
+
+      - name: Installer bauen (gmlConverter-Setup.exe)
+        shell: pwsh
+        run: '& "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" /DAppVersion=$env:APPVER installer.iss'
+
+      - name: Setup-Artefakt hochladen
+        uses: actions/upload-artifact@v4
+        with:
+          name: gmlConverter-setup
+          path: installer_out/gmlConverter-Setup.exe
           if-no-files-found: error
 
   # -------------------------------------------------------------- Release
@@ -163,13 +183,13 @@ jobs:
         with:
           path: artifacts
 
-      - name: GitHub-Release erstellen
+      - name: GitHub-Release erstellen (Setup + macOS)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release create "${{ github.ref_name }}" \
+            artifacts/gmlConverter-setup/gmlConverter-Setup.exe \
             artifacts/gmlConverter-macos/gmlConverter-macos.zip \
-            artifacts/gmlConverter-windows/gmlConverter-windows.zip \
             --repo "${{ github.repository }}" \
             --title "${{ github.ref_name }}" \
             --generate-notes

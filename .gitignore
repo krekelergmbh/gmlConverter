@@ -13,6 +13,9 @@ dist/
 # Lokal heruntergeladene CI-Artefakte
 _builds/
 
+# Inno-Setup-Ausgabe
+installer_out/
+
 # Im CI generierte Icon-Zwischendateien
 icon_master.png
 icon.iconset/
