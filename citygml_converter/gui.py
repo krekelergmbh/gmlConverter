@@ -308,11 +308,11 @@ def main():
         for name, lbl in main_labels.items():
             lbl.configure(foreground=BRAND if name == tab_state["main"]
                           else FG_MUTED)
+        # Auswahl nur über Farbe – ein fetter Schnitt wäre breiter und
+        # würde die Nachbar-Tabs verschieben
         for name, lbl in sub_labels.items():
-            active = (name == tab_state["sub"])
-            lbl.configure(foreground=BRAND if active else FG_MUTED,
-                          font=("Segoe UI Semibold", 13) if active
-                          else ("Segoe UI", 13))
+            lbl.configure(foreground=BRAND if name == tab_state["sub"]
+                          else FG_MUTED)
         main_frames[tab_state["main"]].tkraise()
         sub_frames[tab_state["sub"]].tkraise()
 
