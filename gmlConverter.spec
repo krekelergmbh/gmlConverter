@@ -1,9 +1,15 @@
 # -*- mode: python ; coding: utf-8 -*-
 # PyInstaller-Spec für gmlConverter (Windows + macOS).
 # Build:  pyinstaller gmlConverter.spec --noconfirm
+# Windows: EINE selbständige .exe (onefile, entpackt sich beim Start nach %TEMP%)
+# macOS:   .app-Bundle (onedir, von Apple signiert/notarisiert)
 import os
+import re
 import sys
 from PyInstaller.utils.hooks import collect_all
+
+with open("citygml_converter/__init__.py", encoding="utf-8") as _fh:
+    APP_VERSION = re.search(r'__version__\s*=\s*"([^"]+)"', _fh.read()).group(1)
 
 # Ressourcen (germany_bundeslaender.json, Logo, Icons) -> _MEIPASS/__files__
 datas = [("citygml_converter/__files__", "__files__")]
@@ -38,37 +44,37 @@ a = Analysis(
 )
 pyz = PYZ(a.pure)
 
-exe = EXE(
-    pyz,
-    a.scripts,
-    [],
-    exclude_binaries=True,
-    name="gmlConverter",
-    debug=False,
-    bootloader_ignore_signals=False,
-    strip=False,
-    upx=False,
-    console=False,            # GUI-App, keine Konsole
-    disable_windowed_traceback=False,
-    argv_emulation=False,
-    target_arch=None,
-    codesign_identity=None,
-    entitlements_file=None,
-    icon=icon_file,
-)
-
-coll = COLLECT(
-    exe,
-    a.binaries,
-    a.datas,
-    strip=False,
-    upx=False,
-    upx_exclude=[],
-    name="gmlConverter",
-)
-
-# macOS: zusätzlich ein .app-Bundle erzeugen
 if sys.platform == "darwin":
+    # macOS: onedir + .app-Bundle (für Signierung/Notarisierung nötig)
+    exe = EXE(
+        pyz,
+        a.scripts,
+        [],
+        exclude_binaries=True,
+        name="gmlConverter",
+        debug=False,
+        bootloader_ignore_signals=False,
+        strip=False,
+        upx=False,
+        console=False,            # GUI-App, keine Konsole
+        disable_windowed_traceback=False,
+        argv_emulation=False,
+        target_arch=None,
+        codesign_identity=None,
+        entitlements_file=None,
+        icon=icon_file,
+    )
+
+    coll = COLLECT(
+        exe,
+        a.binaries,
+        a.datas,
+        strip=False,
+        upx=False,
+        upx_exclude=[],
+        name="gmlConverter",
+    )
+
     app = BUNDLE(
         coll,
         name="gmlConverter.app",
@@ -77,7 +83,28 @@ if sys.platform == "darwin":
         info_plist={
             "CFBundleName": "gmlConverter",
             "CFBundleDisplayName": "gmlConverter",
-            "CFBundleShortVersionString": "1.0.0",
+            "CFBundleShortVersionString": APP_VERSION,
             "NSHighResolutionCapable": True,
         },
+    )
+else:
+    # Windows: EINE Datei – alles in der .exe, kein _internal-Ordner
+    exe = EXE(
+        pyz,
+        a.scripts,
+        a.binaries,
+        a.datas,
+        [],
+        name="gmlConverter",
+        debug=False,
+        bootloader_ignore_signals=False,
+        strip=False,
+        upx=False,
+        console=False,            # GUI-App, keine Konsole
+        disable_windowed_traceback=False,
+        argv_emulation=False,
+        target_arch=None,
+        codesign_identity=None,
+        entitlements_file=None,
+        icon=icon_file,
     )

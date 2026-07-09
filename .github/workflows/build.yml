@@ -139,9 +139,9 @@ jobs:
       - name: Build mit PyInstaller
         run: pyinstaller gmlConverter.spec --noconfirm
 
-      - name: Ordner als ZIP packen
+      - name: Exe als ZIP packen (onefile - eine Datei, kein _internal)
         shell: pwsh
-        run: Compress-Archive -Path dist/gmlConverter -DestinationPath gmlConverter-windows.zip
+        run: Compress-Archive -Path dist/gmlConverter.exe -DestinationPath gmlConverter-windows.zip
 
       - name: Artefakt hochladen
         uses: actions/upload-artifact@v4
