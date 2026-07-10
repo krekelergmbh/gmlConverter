@@ -194,7 +194,8 @@ def load_dgm_files(paths, log=print, bounds=None, margin=100.0):
 
 def gml_bounds(gml_path):
     """Liefert (min_x, max_x, min_y, max_y) über alle posList-Koordinaten der GML."""
-    tree = ET.parse(gml_path)
+    from citygml_converter.z0_converter import parse_citygml
+    tree = parse_citygml(gml_path)
     root = tree.getroot()
     min_x = min_y = float("inf")
     max_x = max_y = float("-inf")

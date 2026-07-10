@@ -14,7 +14,8 @@ def parse_gml_to_multiblock(gml_path: str) -> pv.MultiBlock:
       - Anzahl Buildings (Gebäude)
     """
 
-    tree = ET.parse(gml_path)
+    from citygml_converter.z0_converter import parse_citygml
+    tree = parse_citygml(gml_path)
     root = tree.getroot()
 
     ns = {

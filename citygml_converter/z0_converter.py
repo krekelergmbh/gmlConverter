@@ -1,6 +1,18 @@
 # z0_converter.py
 
+import os
 import xml.etree.ElementTree as ET
+
+
+def parse_citygml(input_path):
+    """Parst eine CityGML-Datei mit verständlicher Fehlermeldung bei Nicht-XML."""
+    try:
+        return ET.parse(input_path)
+    except ET.ParseError:
+        raise ValueError(
+            f"'{os.path.basename(input_path)}' ist keine gültige CityGML/XML-Datei. "
+            f"Bitte eine .gml- oder .xml-Datei wählen (IFC-Dateien können hier "
+            f"nicht als Eingabe verwendet werden).")
 
 # Angepasste Namespaces entsprechend Deiner GML-Datei
 ns = {
@@ -15,7 +27,7 @@ def convert_gml_to_z0(input_path, output_path):
     von allen Z-Koordinaten ab, damit das Gebäude bei Z=0 liegt.
     Speichert die angepasste Datei in 'output_path'.
     """
-    tree = ET.parse(input_path)
+    tree = parse_citygml(input_path)
     root = tree.getroot()
     building_count = 0
     updated_buildings = 0

@@ -26,6 +26,24 @@ from citygml_converter.gml_to_ifc import convert_gml_to_ifc
 GML_FILETYPES = [("CityGML Dateien", "*.gml *.xml"), ("Alle Dateien", "*.*")]
 
 
+def _log_min_z(gml_path, log):
+    """Kontrolle nach z0: niedrigsten Z-Wert der Ausgabedatei melden."""
+    try:
+        import xml.etree.ElementTree as ET
+        root = ET.parse(gml_path).getroot()
+        z_min = None
+        for pos_list in root.iter('{http://www.opengis.net/gml}posList'):
+            if not pos_list.text:
+                continue
+            vals = [float(v) for v in pos_list.text.split()]
+            for z in vals[2::3]:
+                z_min = z if z_min is None else min(z_min, z)
+        if z_min is not None:
+            log(f"Kontrolle: niedrigster Punkt liegt jetzt bei z = {z_min:.2f} m")
+    except Exception:
+        pass
+
+
 def execute_workflow(gml_files, dgm_files, output_path,
                      gml_output="ifc", z0=False, log=print):
     """Führt den zusammengestellten Workflow aus (testbar, ohne GUI).
@@ -69,12 +87,17 @@ def execute_workflow(gml_files, dgm_files, output_path,
         convert_gml_to_ifc(None, output_path, terrain=(vertices, faces))
     else:  # nur GML
         if gml_output == "ifc":
+            if z0:
+                log("Hinweis: 'Höhen auf Null (z0)' wirkt nur bei der "
+                    "GML-Ausgabe und wird für das IFC-Modell übersprungen – "
+                    "dort wird der Ursprung automatisch lokal gesetzt.")
             log("Erzeuge IFC aus den Gebäuden ...")
             convert_gml_to_ifc(gml_path, output_path)
         else:
             if z0:
                 log("Setze Höhen auf Null (z0) ...")
                 convert_gml_to_z0(gml_path, output_path)
+                _log_min_z(output_path, log)
             elif len(gml_files) > 1:
                 log("Schreibe vereinte GML-Datei ...")
                 combine_gml_files(gml_files, output_path,
@@ -282,13 +305,27 @@ def create_tab_workflow(notebook):
             rb1.grid(row=row, column=0, sticky="w", pady=(0, 8)); row += 1
             rb2 = ttkb.Radiobutton(content, text="  Bearbeitete GML-Datei (vereint und/oder Höhen auf Null)",
                                    variable=gml_output, value="gml")
-            rb2.grid(row=row, column=0, sticky="w", pady=(0, 12)); row += 1
+            rb2.grid(row=row, column=0, sticky="w", pady=(0, 8)); row += 1
             cb_z0 = ttkb.Checkbutton(content, text="  Höhen auf Null setzen (z0) – Gebäude beginnen bei Höhe 0",
                                      variable=z0_var, bootstyle="round-toggle")
-            cb_z0.grid(row=row, column=0, sticky="w", pady=(0, 12)); row += 1
-            _hint(content, "Hinweis: z0 wirkt nur bei der GML-Ausgabe. Beim "
-                           "IFC-Modell wird der Ursprung ohnehin automatisch "
-                           "lokal gesetzt.", row); row += 1
+            cb_z0.grid(row=row, column=0, sticky="w", padx=(28, 0), pady=(0, 12)); row += 1
+
+            # z0 ist nur bei GML-Ausgabe wählbar – sonst deaktiviert,
+            # damit ein gesetzter Haken nicht still ignoriert wird
+            def _sync_z0(*_):
+                if gml_output.get() == "gml":
+                    cb_z0.configure(state="normal")
+                else:
+                    z0_var.set(False)
+                    cb_z0.configure(state="disabled")
+
+            rb1.configure(command=_sync_z0)
+            rb2.configure(command=_sync_z0)
+            _sync_z0()
+
+            _hint(content, "Hinweis: z0 ist nur bei der GML-Ausgabe wählbar. "
+                           "Beim IFC-Modell wird der Ursprung ohnehin "
+                           "automatisch lokal gesetzt.", row); row += 1
 
         ttkb.Checkbutton(content, text="  Nach Abschluss 3D-Vorschau anzeigen",
                          variable=preview_var, bootstyle="round-toggle")\

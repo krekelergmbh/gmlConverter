@@ -34,7 +34,8 @@ def convert_gml_to_ifc(input_path, output_path, terrain=None):
     buildings = []
     all_coords = []
     if input_path:
-        tree = ET.parse(input_path)
+        from citygml_converter.z0_converter import parse_citygml
+        tree = parse_citygml(input_path)
         root = tree.getroot()
 
         buildings = root.findall('.//core:cityObjectMember/bldg:Building', ns)
