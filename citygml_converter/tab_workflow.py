@@ -44,20 +44,26 @@ def _log_min_z(gml_path, log):
         pass
 
 
-def execute_workflow(gml_files, dgm_files, output_path,
-                     gml_output="ifc", z0=False, log=print):
+def execute_workflow(gml_files, dgm_files, output_path, z0=False, log=print):
     """Führt den zusammengestellten Workflow aus (testbar, ohne GUI).
+
+    Fester Trichter: GML(s) (+ optional DGM) -> auto-Merge -> optional z0
+    -> am Ende entsteht IMMER ein IFC-Modell.
 
     gml_files:   Liste von CityGML-Dateien (mehrere werden automatisch vereint)
     dgm_files:   Liste von DGM-Kacheln
-    output_path: Zieldatei (.ifc oder .gml, je nach gml_output/Daten)
-    gml_output:  bei reinen GML-Workflows "ifc" oder "gml"
-    z0:          bei GML-Ausgabe zusätzlich Höhen auf Null setzen
+    output_path: IFC-Zieldatei
+    z0:          jedes Gebäude einzeln auf Höhe 0 setzen (alle auf eine
+                 Ebene) – nur ohne Gelände sinnvoll/erlaubt
 
     Rückgabe: (verwendete_gml_datei_oder_None, gelaende_mesh_oder_None)
     """
     if not gml_files and not dgm_files:
         raise ValueError("Keine Eingabedaten angegeben.")
+    if z0 and dgm_files:
+        raise ValueError(
+            "z0 kann nicht mit Gelände kombiniert werden – die Gebäude "
+            "lägen sonst unter dem Gelände.")
 
     # 1) Mehrere GML-Dateien automatisch vereinen
     gml_path = None
@@ -72,9 +78,17 @@ def execute_workflow(gml_files, dgm_files, output_path,
             gml_path = merged
             log("Vereint.")
 
+    # 2) Optional z0 (jedes Gebäude auf eine Ebene bei Höhe 0)
+    if z0 and gml_path:
+        log("Setze Höhen auf Null (z0) – jedes Gebäude beginnt bei 0 ...")
+        z0_file = os.path.join(tempfile.gettempdir(), "gmlconverter_workflow_z0.gml")
+        convert_gml_to_z0(gml_path, z0_file)
+        gml_path = z0_file
+        _log_min_z(gml_path, log)
+
     mesh = None
 
-    # 2) Zielprodukt erzeugen
+    # 3) IFC erzeugen
     if gml_files and dgm_files:
         log("Verarbeite Gelände und kombiniere mit den Gebäuden ...")
         mesh, _ = dgm.prepare_terrain(dgm_files, gml_path=gml_path, log=log)
@@ -85,27 +99,9 @@ def execute_workflow(gml_files, dgm_files, output_path,
         mesh, _ = dgm.prepare_terrain(dgm_files, gml_path=None, log=log)
         vertices, faces = dgm.mesh_to_triangles(mesh)
         convert_gml_to_ifc(None, output_path, terrain=(vertices, faces))
-    else:  # nur GML
-        if gml_output == "ifc":
-            if z0:
-                log("Hinweis: 'Höhen auf Null (z0)' wirkt nur bei der "
-                    "GML-Ausgabe und wird für das IFC-Modell übersprungen – "
-                    "dort wird der Ursprung automatisch lokal gesetzt.")
-            log("Erzeuge IFC aus den Gebäuden ...")
-            convert_gml_to_ifc(gml_path, output_path)
-        else:
-            if z0:
-                log("Setze Höhen auf Null (z0) ...")
-                convert_gml_to_z0(gml_path, output_path)
-                _log_min_z(output_path, log)
-            elif len(gml_files) > 1:
-                log("Schreibe vereinte GML-Datei ...")
-                combine_gml_files(gml_files, output_path,
-                                  progress_callback=lambda c, t: None)
-            else:
-                raise ValueError(
-                    "Nichts zu tun: eine einzelne GML ohne z0 würde nur kopiert. "
-                    "Bitte z0 wählen, mehrere Dateien angeben oder IFC erzeugen.")
+    else:
+        log("Erzeuge IFC aus den Gebäuden ...")
+        convert_gml_to_ifc(gml_path, output_path)
 
     log(f"FERTIG: {output_path}")
     return gml_path, mesh
@@ -122,7 +118,6 @@ def create_tab_workflow(notebook):
     land_var = tk.StringVar(value="Brandenburg")
     gml_files = []
     dgm_files = []
-    gml_output = tk.StringVar(value="ifc")   # "ifc" | "gml"
     z0_var = tk.BooleanVar(value=False)
     preview_var = tk.BooleanVar(value=True)
     out_var = tk.StringVar(value="")
@@ -292,49 +287,27 @@ def create_tab_workflow(notebook):
     def render_optionen():
         row = 0
         if want_gml.get() and want_dgm.get():
+            z0_var.set(False)   # z0 passt nicht zu absoluten Gelände-Höhen
             _info(content, "Gebäude und Gelände werden zu EINEM IFC-Modell "
                            "kombiniert – die Gebäude stehen exakt auf dem "
                            "Gelände.", row); row += 1
         elif want_dgm.get():
+            z0_var.set(False)
             _info(content, "Aus den Gelände-Kacheln entsteht ein IFC-Modell "
                            "des Geländes.", row); row += 1
         else:
-            _info(content, "Was soll aus den Gebäuden entstehen?", row); row += 1
-            rb1 = ttkb.Radiobutton(content, text="  IFC-Modell (für BIM-Software, z. B. Revit/Archicad)",
-                                   variable=gml_output, value="ifc")
-            rb1.grid(row=row, column=0, sticky="w", pady=(0, 8)); row += 1
-            rb2 = ttkb.Radiobutton(content, text="  Bearbeitete GML-Datei (vereint und/oder Höhen auf Null)",
-                                   variable=gml_output, value="gml")
-            rb2.grid(row=row, column=0, sticky="w", pady=(0, 8)); row += 1
-            cb_z0 = ttkb.Checkbutton(content, text="  Höhen auf Null setzen (z0) – Gebäude beginnen bei Höhe 0",
-                                     variable=z0_var, bootstyle="round-toggle")
-            cb_z0.grid(row=row, column=0, sticky="w", padx=(28, 0), pady=(0, 12)); row += 1
-
-            # z0 ist nur bei GML-Ausgabe wählbar – sonst deaktiviert,
-            # damit ein gesetzter Haken nicht still ignoriert wird
-            def _sync_z0(*_):
-                if gml_output.get() == "gml":
-                    cb_z0.configure(state="normal")
-                else:
-                    z0_var.set(False)
-                    cb_z0.configure(state="disabled")
-
-            rb1.configure(command=_sync_z0)
-            rb2.configure(command=_sync_z0)
-            _sync_z0()
-
-            _hint(content, "Hinweis: z0 ist nur bei der GML-Ausgabe wählbar. "
-                           "Beim IFC-Modell wird der Ursprung ohnehin "
-                           "automatisch lokal gesetzt.", row); row += 1
+            _info(content, "Aus den Gebäuden entsteht ein IFC-Modell "
+                           "(für BIM-Software, z. B. Revit/Archicad).", row); row += 1
+            ttkb.Checkbutton(content, text="  Höhen auf Null setzen (z0) – jedes Gebäude beginnt bei Höhe 0",
+                             variable=z0_var, bootstyle="round-toggle")\
+                .grid(row=row, column=0, sticky="w", pady=(0, 8)); row += 1
+            _hint(content, "z0 setzt jedes Gebäude einzeln auf Höhe 0 (alle auf "
+                           "einer Ebene). Ohne z0 bleiben die Höhenunterschiede "
+                           "zwischen den Gebäuden erhalten.", row); row += 1
 
         ttkb.Checkbutton(content, text="  Nach Abschluss 3D-Vorschau anzeigen",
                          variable=preview_var, bootstyle="round-toggle")\
             .grid(row=row, column=0, sticky="w", pady=(6, 0))
-
-    def _output_is_ifc():
-        if want_dgm.get():
-            return True
-        return gml_output.get() == "ifc"
 
     def render_fertig():
         lines = []
@@ -344,15 +317,14 @@ def create_tab_workflow(notebook):
         if want_dgm.get():
             lines.append(f"• Gelände: {len(dgm_files)} Kachel(n)"
                          + (" – Zuschnitt auf Gebäudebereich" if want_gml.get() else ""))
+        if z0_var.get():
+            lines.append("• z0: jedes Gebäude wird auf Höhe 0 gesetzt")
         if want_gml.get() and want_dgm.get():
             lines.append("• Ergebnis: kombiniertes IFC-Modell (Gebäude + Gelände)")
         elif want_dgm.get():
             lines.append("• Ergebnis: IFC-Modell des Geländes")
-        elif _output_is_ifc():
-            lines.append("• Ergebnis: IFC-Modell der Gebäude")
         else:
-            lines.append("• Ergebnis: bearbeitete GML-Datei"
-                         + (" (Höhen auf Null)" if z0_var.get() else ""))
+            lines.append("• Ergebnis: IFC-Modell der Gebäude")
         if preview_var.get():
             lines.append("• Danach: 3D-Vorschau")
 
@@ -368,12 +340,8 @@ def create_tab_workflow(notebook):
                    font=("Segoe UI Semibold", 13), foreground=INK).pack(side="left")
 
         def choose_out():
-            if _output_is_ifc():
-                path = filedialog.asksaveasfilename(
-                    defaultextension=".ifc", filetypes=[("IFC4 Dateien", "*.ifc")])
-            else:
-                path = filedialog.asksaveasfilename(
-                    defaultextension=".gml", filetypes=[("CityGML Dateien", "*.gml")])
+            path = filedialog.asksaveasfilename(
+                defaultextension=".ifc", filetypes=[("IFC4 Dateien", "*.ifc")])
             if path:
                 out_var.set(path)
 
@@ -498,14 +466,12 @@ def create_tab_workflow(notebook):
                 gml_files=list(gml_files) if want_gml.get() else [],
                 dgm_files=list(dgm_files) if want_dgm.get() else [],
                 output_path=out,
-                gml_output=gml_output.get(),
                 z0=z0_var.get(),
                 log=_log,
             )
             if preview_var.get():
-                # GML-Ausgabe: das Ergebnis zeigen; sonst die verwendeten Gebäude
-                preview_gml = out if (used_gml and not _output_is_ifc()) else used_gml
-                _show_result_preview(preview_gml if want_gml.get() else None, mesh)
+                # used_gml ist der final verwendete Stand (inkl. Merge/z0)
+                _show_result_preview(used_gml if want_gml.get() else None, mesh)
         except Exception as e:
             print("Fehler im Workflow:", e)
         finally:

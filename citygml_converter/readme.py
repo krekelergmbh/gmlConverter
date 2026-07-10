@@ -63,9 +63,10 @@ def create_readme_tab(notebook, style):
             "Laden Sie dort die Daten für Ihr Gebiet herunter (ZIP-Dateien bitte entpacken).\n\n"
             "Schritt 3: Geben Sie die heruntergeladenen Dateien an – mehrere GML-Dateien werden automatisch vereint, "
             "das Gelände wird automatisch auf den Gebäudebereich zugeschnitten.\n\n"
-            "Schritt 4: Bestätigen Sie die Optionen (z. B. IFC-Modell oder bearbeitete GML, Höhen auf Null, 3D-Vorschau).\n\n"
+            "Schritt 4: Bestätigen Sie die Optionen (z. B. Höhen auf Null setzen, 3D-Vorschau). "
+            "Am Ende entsteht immer ein IFC-Modell.\n\n"
             "Schritt 5: Speicherort wählen und auf 'Jetzt ausführen' klicken – der Assistent erledigt alle Schritte "
-            "in der richtigen Reihenfolge und zeigt auf Wunsch die 3D-Vorschau."
+            "(Vereinen, z0, Gelände, IFC) in der richtigen Reihenfolge und zeigt auf Wunsch die 3D-Vorschau."
         ),
         "Pick GML": (
             "Schritt 1: Navigieren Sie in der interaktiven Deutschlandkarte zu dem Bundesland, aus dem Sie CityGML LoD2-Daten beziehen möchten.\n\n"
