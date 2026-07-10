@@ -285,6 +285,24 @@ def prepare_terrain(dgm_paths, gml_path=None, margin=100.0,
     points = load_dgm_files(dgm_paths, log=log, bounds=bounds, margin=margin)
     log(f"DGM gesamt: {len(points):,} Punkte".replace(",", "."))
 
+    # Abdeckung prüfen: ragt der Gebäudebereich über das Gelände hinaus?
+    if bounds is not None and len(points):
+        tol = 5.0  # Meter Toleranz an den Rändern
+        gaps = []
+        if points[:, 0].min() > bounds[0] + tol:
+            gaps.append("westlich")
+        if points[:, 0].max() < bounds[1] - tol:
+            gaps.append("östlich")
+        if points[:, 1].min() > bounds[2] + tol:
+            gaps.append("südlich")
+        if points[:, 1].max() < bounds[3] - tol:
+            gaps.append("nördlich")
+        if gaps:
+            log("WARNUNG: Das Gelände deckt den Gebäudebereich NICHT vollständig "
+                f"ab – es fehlen Kacheln {', '.join(gaps)} davon. "
+                "Bitte weitere DGM-Kacheln herunterladen und hinzufügen, "
+                "sonst stehen dortige Gebäude ohne Gelände da.")
+
     points = thin_points(points, max_points=max_points)
     log(f"Für Mesh verwendet: {len(points):,} Punkte".replace(",", "."))
     mesh = terrain_mesh(points)
