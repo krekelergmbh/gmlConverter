@@ -261,12 +261,15 @@ def convert_gml_to_ifc(input_path, output_path, terrain=None):
             ObjectPlacement=proxy_local_placement
         )
 
-        # Geometrie -> IfcFacetedBrep
-        # IfcPolyLoop verlangt paarweise verschiedene Punkte: den CityGML-
-        # Schlusspunkt (erster == letzter) und Folge-Duplikate entfernen,
-        # degenerierte Loops überspringen – strenge Importer (z. B. Archicad)
-        # verwerfen sonst den ganzen Körper
-        faces = []
+        # Geometrie -> trianguliertes Flächenmodell (IfcTriangulatedFaceSet).
+        # Bewusst KEIN IfcFacetedBrep/IfcClosedShell mehr: LoD2-Hüllen sind
+        # oft nicht wasserdicht und Dachflächen nicht exakt eben – strenge
+        # Importer (z. B. Archicad) verwerfen solche "Solids" komplett.
+        # Dreiecke sind immer eben, ein Flächenmodell braucht keine
+        # geschlossene Hülle.
+        sub_points = []
+        sub_faces = []
+        vertex_index = 0
         for poly_points in polygons:
             pts = list(poly_points)
             if len(pts) >= 2 and pts[0] == pts[-1]:
@@ -277,23 +280,49 @@ def convert_gml_to_ifc(input_path, output_path, terrain=None):
                     cleaned.append(pt)
             if len(cleaned) < 3:
                 continue
-            cpoints = [ifc_file.create_entity("IfcCartesianPoint", Coordinates=pt) for pt in cleaned]
-            poly_loop = ifc_file.create_entity("IfcPolyLoop", Polygon=cpoints)
-            face_outer_bound = ifc_file.create_entity("IfcFaceOuterBound", Bound=poly_loop, Orientation=True)
-            face = ifc_file.create_entity("IfcFace", Bounds=[face_outer_bound])
-            faces.append(face)
+            sub_faces.append([len(cleaned)] +
+                             list(range(vertex_index, vertex_index + len(cleaned))))
+            sub_points.extend(cleaned)
+            vertex_index += len(cleaned)
 
-        if not faces:
+        if not sub_points:
             print(f"Keine gültigen Flächen im Building {bldg_id} – übersprungen.")
             continue
-        closed_shell = ifc_file.create_entity("IfcClosedShell", CfsFaces=faces)
-        faceted_brep = ifc_file.create_entity("IfcFacetedBrep", Outer=closed_shell)
+
+        import numpy as np
+        import pyvista as pv
+        try:
+            poly = pv.PolyData(np.asarray(sub_points, dtype=float),
+                               faces=np.hstack(sub_faces))
+            tri = poly.triangulate()
+            if tri.n_cells == 0:
+                raise ValueError("Triangulation leer")
+            tri_faces = tri.faces.reshape(-1, 4)[:, 1:4]
+            tri_verts = tri.points
+        except Exception:
+            # Rückfall: Fächer-Triangulation (für die meist konvexen Flächen)
+            tri_verts = np.asarray(sub_points, dtype=float)
+            tri_faces = []
+            for face in sub_faces:
+                idxs = face[1:]
+                for k in range(1, len(idxs) - 1):
+                    tri_faces.append((idxs[0], idxs[k], idxs[k + 1]))
+            tri_faces = np.asarray(tri_faces, dtype=int)
+
+        point_list = ifc_file.create_entity("IfcCartesianPointList3D",
+            CoordList=[(float(v[0]), float(v[1]), float(v[2])) for v in tri_verts]
+        )
+        face_set = ifc_file.create_entity("IfcTriangulatedFaceSet",
+            Coordinates=point_list,
+            CoordIndex=[(int(a) + 1, int(b) + 1, int(c) + 1) for a, b, c in tri_faces],
+            Closed=False
+        )
 
         shape_rep = ifc_file.create_entity("IfcShapeRepresentation",
             ContextOfItems=geom_context,
             RepresentationIdentifier="Body",
-            RepresentationType="Brep",
-            Items=[faceted_brep]
+            RepresentationType="Tessellation",
+            Items=[face_set]
         )
         product_def_shape = ifc_file.create_entity("IfcProductDefinitionShape",
             Representations=[shape_rep]
