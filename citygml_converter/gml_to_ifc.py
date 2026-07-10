@@ -262,13 +262,30 @@ def convert_gml_to_ifc(input_path, output_path, terrain=None):
         )
 
         # Geometrie -> IfcFacetedBrep
+        # IfcPolyLoop verlangt paarweise verschiedene Punkte: den CityGML-
+        # Schlusspunkt (erster == letzter) und Folge-Duplikate entfernen,
+        # degenerierte Loops überspringen – strenge Importer (z. B. Archicad)
+        # verwerfen sonst den ganzen Körper
         faces = []
         for poly_points in polygons:
-            cpoints = [ifc_file.create_entity("IfcCartesianPoint", Coordinates=pt) for pt in poly_points]
+            pts = list(poly_points)
+            if len(pts) >= 2 and pts[0] == pts[-1]:
+                pts.pop()
+            cleaned = []
+            for pt in pts:
+                if not cleaned or cleaned[-1] != pt:
+                    cleaned.append(pt)
+            if len(cleaned) < 3:
+                continue
+            cpoints = [ifc_file.create_entity("IfcCartesianPoint", Coordinates=pt) for pt in cleaned]
             poly_loop = ifc_file.create_entity("IfcPolyLoop", Polygon=cpoints)
             face_outer_bound = ifc_file.create_entity("IfcFaceOuterBound", Bound=poly_loop, Orientation=True)
             face = ifc_file.create_entity("IfcFace", Bounds=[face_outer_bound])
             faces.append(face)
+
+        if not faces:
+            print(f"Keine gültigen Flächen im Building {bldg_id} – übersprungen.")
+            continue
         closed_shell = ifc_file.create_entity("IfcClosedShell", CfsFaces=faces)
         faceted_brep = ifc_file.create_entity("IfcFacetedBrep", Outer=closed_shell)
 
